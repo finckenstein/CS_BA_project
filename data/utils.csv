@@ -1,0 +1,20 @@
+Utils,Define,Ambiguous_Verb,Prep_Verb,Title,Location,Ingredients,Recipe,Negation_recipe,Negation_ingredient,Subject
+knife,negation_recipe,peel,"pierce, slash, chop, penetrate, trim, pare, mince, dice",,,,,plantain | banana | apple | carrots | cucumber | potatoes | mango | eggplant | pear | vegetable,,
+knife,negation_ingredient,"cut, slice","pierce, slash, chop, penetrate, trim, pare, mince, dice",,,,,,yeast & flour | pizza dough  | pizza crust,
+peeler,recipe,peel,,,,,apple | carrots | cucumber | potatoes | mango | eggplant | pear | vegetable,,,
+wooden spoon,,,stir,,,,,,,
+spatula,title | ingredient,flip,,burger | pancake,,burger | pancake | quesadilla,,,,
+tongs,title & recipe | location,"flip, sear",,grill | bbq,grill | bbq,,pork | goat | lamb | chicken | turkey | duck | rabbit | venison | ribeye | salmon | thigh,,,
+ladle,title | recipe,serve,ladle,soup | broth | stew ,,,soup | broth | stew | bouillon,,,
+whisk,recipe,mix,"whisk, beat, whip",,,,"spice, egg",,,
+plastic sieve,negation_recipe,drain,"strain, rinse",,,,,towel | oil,,
+pizza roller,ingredient & title,"slice, cut",,pizza,,yeast & flour | pizza dough  | pizza crust,,,,
+masher,recipe_negation,mash,,,,,,banana,,
+blender,,,blend,,,,,,,
+brush,subject,spread,brush,,,,,,,oil
+scoop,subject,remove,scoop,,,,,,,seed
+metal sieve,,,sift,,,,,,,
+grater,negation_recipe,shred,grate,,,,,pork | chicken | beef | jerk,,
+rolling pin,recipe,"roll, flatten",,,,,bread | dough,,,
+2 forks,recipe,shred,,,,,pork | chicken | beef | jerk,,,
+1 fork,recipe,mash,,,,,banana,,,
