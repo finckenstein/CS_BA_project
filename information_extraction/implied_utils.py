@@ -37,7 +37,7 @@ def string_to_dictionary(prep_str):
 def sql_fetch_recipe_db():
     recipe_connection = sqlite3.connect('../data/recipes1.db')
     recipe_cursor = recipe_connection.cursor()
-    recipe_cursor.execute("SELECT * FROM Recipes;")
+    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/vegan-crumble-muffins';")
     return recipe_cursor.fetchall()
 
 
@@ -49,8 +49,9 @@ def sql_fetch_util_db():
 
 
 def is_util_found(keywords_list, recipe_str):
+    print("[is_util_found] ", keywords_list, recipe_str)
     for word in keywords_list:
-        if word in recipe_str:
+        if word in recipe_str.lower():
             return True
     return False
 
@@ -76,20 +77,23 @@ def handle_conjunction_in_definition(def_list_keyword, recipe_ingre):
 
 def find_dobj(step_str, verb):
     found_verb = False
+    object_str = ""
     print("[find_dobj] " + step_str, verb)
-    for token in nlp(step_str):
-        if token.text.lower() == verb:
+    sentences = list(nlp(step_str).sents)
+    for token in sentences[0]:
+        if token.text.lower() == verb.lower():
             print("SETTING found_verb TO TRUE")
             found_verb = True
-        elif token.dep_ == "dobj" and found_verb:
-            return token.lemma_
-    return None
+        elif token.dep_ == "dobj" or token.dep_ == "pobj" and found_verb:
+            object_str += token.lemma_.lower() + ", "
+    return object_str
 
 
 def check_definition(curr_def, current_util, recipe_step, recipe_title, recipe_ingre, verb):
     print(curr_def)
     if curr_def == "recipe":
         def_list_keyword = current_util[RECIPE].split(" | ")
+        print(def_list_keyword)
         return is_util_found(def_list_keyword, recipe_step)
     elif curr_def == "negation_recipe":
         def_list_keyword = current_util[NEGATION_RECIPE].split(" | ")
@@ -100,7 +104,7 @@ def check_definition(curr_def, current_util, recipe_step, recipe_title, recipe_i
         return not handle_conjunction_in_definition(def_list_keyword, recipe_ingre)
     elif curr_def == "title":
         def_list_keyword = current_util[UTIL_TITLE].split(" | ")
-        return is_util_found(def_list_keyword, recipe_title.lower())
+        return is_util_found(def_list_keyword, recipe_title)
     elif curr_def == "location":
         def_list_keyword = current_util[LOCATION].split(" | ")
         return is_util_found(def_list_keyword, recipe_step)
@@ -110,7 +114,7 @@ def check_definition(curr_def, current_util, recipe_step, recipe_title, recipe_i
     elif curr_def == "subject":
         def_list_keyword = current_util[SUBJECT].split(" | ")
         subject = find_dobj(recipe_step, verb)
-        print(subject)
+        print("RETURNED FROM [find_dobj]: " + subject)
         if subject is None:
             return False
         else:
@@ -160,16 +164,20 @@ def find_utils(recipe, dictionary, util_list):
                     for util in util_rows:
                         if util[AMBIGUOUS_V] is not None:
                             for keyword in util[AMBIGUOUS_V].split(", "):
-                                if keyword == verb and not (util[UTIL] in util_list):
+                                if keyword == verb:
                                     print("KEYWORD " + keyword)
-                                    if is_util_suitable(recipe[INGREDIENTS], dictionary[key],
-                                                        recipe[TITLE], util, verb):
+                                    is_suitable = is_util_suitable(recipe[INGREDIENTS], dictionary[key],
+                                                        recipe[TITLE], util, verb)
+                                    if is_suitable and not (util[UTIL] in util_list):
                                         preparation = preparation[:-1]
                                         preparation += "(" + str(count) + ") "
                                         count += 1
                                         print(util[UTIL] + " is suitable and will be added\n")
                                         util_list.append(util[UTIL])
-                                    else:
+                                    elif is_suitable and (util[UTIL] in util_list):
+                                        preparation = preparation[:-1]
+                                        preparation += "(" + str(util_list.index(util[UTIL])) + ") "
+                                    # else:
                                         print(util[UTIL] + " is not suitable and will not be added\n")
 
                         if util[PREPARATION_V] is not None:
@@ -180,21 +188,18 @@ def find_utils(recipe, dictionary, util_list):
                                     preparation += "(" + str(count) + ") "
                                     count += 1
                                     util_list.append(util[UTIL])
+                                elif keyword == verb and (util[UTIL] in util_list):
+                                    preparation = preparation[:-1]
+                                    preparation += "(" + str(util_list.index(util[UTIL])) + ") "
     return preparation
 
 
 def write_to_csv(data):
     fields = ['URL', 'Preparation', 'Utils']
     filename = "found_utils.csv"
-    # writing to csv file
     with open(filename, 'w') as csvfile:
-        # creating a csv dict writer object
         writer = csv.DictWriter(csvfile, fieldnames=fields)
-
-        # writing headers (field names)
         writer.writeheader()
-
-        # writing data rows
         writer.writerows(data)
 
 
@@ -213,6 +218,6 @@ if __name__ == "__main__":
         all_data.append(dic)
         utils = []
         edited_recipe = ""
-        # find_utils(row, string_to_dictionary(row[i.INGREDIENTS]), utils)
 
-    write_to_csv(all_data)
+    print(all_data)
+    # write_to_csv(all_data)
