@@ -21,34 +21,26 @@ import pandas as pd
 
 
 if __name__ == "__main__":
-    conn = sqlite3.connect('utils.db')
+    conn = sqlite3.connect('../constructed_knowledge/tools.db')
     c = conn.cursor()
-    c.execute("CREATE TABLE IF NOT EXISTS Utils ("
+    c.execute("CREATE TABLE IF NOT EXISTS Tools ("
               "ID int AUTO_INCREMENT Primary Key, "
-              "Utils text, "
-              "Define text, "
-              "Ambiguous_Verb"
-              "Prep_Verb text, "
-              "Title text, "
+              "Tool text, "
               "Location text, "
+              "Direct_Verb text, "
+              "Ambiguous_Verb text, "
+              "Implied text, "
+              "Define text, "
+              "Title text, "
+              "IsA_rel text, "
+              "Not_IsA_rel text, "
+              "Size text, "
+              "Not_size text, "
+              "Subject text, "
+              "Not_subject text, "
               "Ingredient text, "
-              "Recipe text, "
-              "Negation_recipe text,"
-              "Negation_ingredient text,"
-              "Subject text);")
+              "Not_ingredient text);")
     conn.commit()
 
-    r_recipes = pd.read_csv('utils.csv')
-    r_recipes.to_sql('Utils', conn, if_exists='replace', index=False)
-
-# if __name__ == "__main__":
-    # conn = sqlite3.connect('found_utils.db')
-    # c = conn.cursor()
-    # c.execute("CREATE TABLE IF NOT EXISTS Found_Utils ("
-    #           "URL text Primary Key, "
-    #           "Preparation text,"
-    #           "Utils text);")
-    # conn.commit()
-    #
-    # r_recipes = pd.read_csv('found_utils.csv')
-    # r_recipes.to_sql('Found_Utils', conn, if_exists='replace', index=False)
+    r_recipes = pd.read_csv('../constructed_knowledge/tools.csv')
+    r_recipes.to_sql('Tools', conn, if_exists='replace', index=False)
