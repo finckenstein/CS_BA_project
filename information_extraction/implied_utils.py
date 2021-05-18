@@ -31,16 +31,40 @@ def check_title(tool, recipe_title):
 def match_definition_to_recipe(tool, index, string_to_match):
     for subject in tool[index].split(" | "):
         if "&" in subject:
-            conj_counter = 0
             conj_concept_list = subject.split(" & ")
             for conj_subject in conj_concept_list:
-                if conj_subject in string_to_match:
-                    conj_counter += 1
-            if conj_counter == len(conj_concept_list):
-                return True
+                if not (conj_subject in string_to_match):
+                    continue
+            return True
         else:
             if subject in string_to_match:
                 return True
+    return False
+
+
+def match_definition_to_ingredient(tool, index, ingredient_list):
+    print("[match_definition_to_ingredient] ingredient list: " + str(ingredient_list))
+    print("[match_definition_to_ingredient] tool: " + str(tool[Indexes.T_TOOL]))
+    for keyword in tool[index].split(" | "):
+        print("keyword from tool " + str(keyword))
+        if "&" in keyword:
+            conj_counter = 0
+            conj_keyword_list = keyword.split(" & ")
+            for conj_keyword in conj_keyword_list:
+                for ingredient in ingredient_list:
+                    if ingredient == conj_keyword:
+                        print("[match_definition_to_ingredient] increase counter because " + str(ingredient) +
+                              " is equal to " + str(conj_keyword))
+                        conj_counter += 1
+            if conj_counter == len(conj_keyword_list):
+                return True
+        else:
+            for ingredient in ingredient_list:
+                if ingredient == keyword:
+                    print("[match_definition_to_ingredient] RETURN TRUE because " + str(ingredient) + " is equal to " +
+                          str(keyword))
+                    return True
+    print("[match_definition_to_ingredient] RETURN FALSE")
     return False
 
 
@@ -48,28 +72,53 @@ class FindImpliedTools:
     def __init__(self):
         self.nlp = spacy.load('en_core_web_trf')
         self.cur_kitchenware = None
-        self.kitchenware = ['grill', 'barbecue', 'bbq', 'fryer', 'skillet', 'pan', 'pot', 'saucepan', 'bowl',
-                            'casserole', 'sheet', 'mixer', 'blender', 'dish']
+        self.kitchenware = ['grill', 'barbecue', 'bbq', 'air fryer', 'skillet', 'pan', 'pot', 'saucepan', 'bowl',
+                            'casserole', 'baking sheet', 'mixer', 'blender', 'baking dish', 'foil dish']
 
         self.entire_tool_kb = sql_fetch_util_db()
         recipe_rows = sql_fetch_recipe_db()
 
         self.edited_recipe = ""
         self.tools = []
-        self.subjects_in_step = []
+        self.subjects_in_step = {}
         self.verbs_in_step = []
+        self.verbs_in_ingredient = []
+        self.nouns_in_ingredient = []
         all_data = []
 
         for row in recipe_rows:
+            self.parse_ingredients(row[Indexes.R_INGREDIENTS])
             self.parse_recipe(row)
             dic = {'URL': row[Indexes.R_URL], 'Preparation': self.edited_recipe, 'Utils': self.tools}
             all_data.append(dic)
 
+            self.verbs_in_ingredient = []
+            self.nouns_in_ingredient = []
             self.tools = []
             self.edited_recipe = ""
 
         print(all_data)
         # write_to_csv(all_data)
+
+    def parse_ingredients(self, ingredient_str):
+        ingredient_list = string_to_dictionary(ingredient_str)
+        for key in ingredient_list:
+            for ingredient_elem in ingredient_list[key]:
+                index = 0
+                ingredient_elem_spacy = self.nlp(ingredient_elem)
+                for token in ingredient_elem_spacy:
+                    if token.pos_ == "NOUN":
+                        if token.dep_ == "compound":
+                            self.nouns_in_ingredient.append(
+                                token.lemma_.lower() + " " + ingredient_elem_spacy[index + 1].
+                                lemma_.lower())
+                        elif not token.lemma_.lower() in self.nouns_in_ingredient:
+                            self.nouns_in_ingredient.append(token.lemma_.lower())
+                    elif token.pos_ == "VERB" and not token.lemma_.lower() in self.verbs_in_ingredient:
+                        self.verbs_in_ingredient.append(token.lemma_.lower())
+                    index += 1
+        print("VERBS: " + str(self.verbs_in_ingredient))
+        print("NOUNS: " + str(self.nouns_in_ingredient))
 
     def parse_recipe(self, recipe):
         dictionary = string_to_dictionary(recipe[Indexes.R_PREPARATION])
@@ -79,14 +128,14 @@ class FindImpliedTools:
             sentences = list(step.sents)
 
             self.find_verbs_and_nouns(sentences)
-            self.find_kitchenware()
 
             print(key, dictionary[key])
             print("NOUNS IN THIS STEP: " + str(self.subjects_in_step))
             print("VERBS IN THIS STEP: " + str(self.verbs_in_step))
-            print("[parse_preparation] current kitchenware: " + str(self.cur_kitchenware))
-
+            num_sentence = 0
             for sentence in sentences:
+                self.find_kitchenware(num_sentence)
+                print("[parse_preparation] current kitchenware: " + str(self.cur_kitchenware))
                 for token in sentence:
                     if token.pos_ == "PUNCT":
                         self.edited_recipe = self.edited_recipe[:-1]
@@ -95,23 +144,37 @@ class FindImpliedTools:
                         verb = token.lemma_.lower()
                         print("VERB: " + verb)
                         self.find_tool_that_corresponds_to_verb(recipe, verb)
+                num_sentence += 1
 
-            self.subjects_in_step = []
+            self.subjects_in_step = {}
             self.verbs_in_step = []
 
     def find_verbs_and_nouns(self, step):
+        num_sentences = 0
         for sentence in step:
+            sentence_index = 0
+            self.subjects_in_step[num_sentences] = []
             for token in sentence:
-                if token.pos_ == "VERB" or token.pos_ == "PRON":
+                if (token.pos_ == "VERB" or token.pos_ == "PRON") and not token.lemma_.lower() in self.verbs_in_step:
                     self.verbs_in_step.append(token.lemma_.lower())
-                if token.pos_ == "NOUN" and token.dep_ == "dobj" or token.dep_ == "pobj":
-                    self.subjects_in_step.append(token.lemma_.lower())
+                if token.pos_ == "NOUN":
+                    if token.dep_ == "compound" and not str(
+                            token.lemma_.lower() + " " + sentence[
+                                sentence_index + 1].lemma_.lower()) in self.subjects_in_step:
+                        self.subjects_in_step[num_sentences].append(
+                            token.lemma_.lower() + " " + sentence[sentence_index + 1].lemma_.lower())
+                    elif token.dep_ == "dobj" or token.dep_ == "pobj" and not token.lemma_.lower() in \
+                                                                              self.subjects_in_step:
+                        self.subjects_in_step[num_sentences].append(token.lemma_.lower())
+                sentence_index += 1
+            num_sentences += 1
 
-    def find_kitchenware(self):
-        for noun in self.subjects_in_step:
-            if noun in self.kitchenware:
-                self.cur_kitchenware = noun
-                break
+    def find_kitchenware(self, num_sentences):
+        for noun in self.subjects_in_step[num_sentences]:
+            for kitchenware in self.kitchenware:
+                if noun == kitchenware:
+                    self.cur_kitchenware = noun
+                    break
 
     def find_tool_that_corresponds_to_verb(self, recipe, verb):
         for tool in self.entire_tool_kb:
@@ -135,7 +198,6 @@ class FindImpliedTools:
                     and kitchenware_is_appropriate
                     and self.is_implied_tool_applicable(tool)
                     and self.check_tools_definition(tool, recipe)):
-
                 print("[find_tool] added " + tool[Indexes.T_TOOL] + " because of " + verb + "\n\n")
                 self.append_tool_to_list(tool)
 
@@ -151,14 +213,14 @@ class FindImpliedTools:
         if tool[Indexes.T_AMBIGUOUS_VERB] is not None:
             for verb in tool[Indexes.T_AMBIGUOUS_VERB].split(", "):
                 if verb in self.verbs_in_step:
-                    print("RETURN FALSE BECAUSE " + verb + " in " + str(self.verbs_in_step))
+                    print("[is_implied_tool_applicable]RETURN FALSE BECAUSE " + verb + " in " + str(self.verbs_in_step))
                     return False
         if tool[Indexes.T_DIRECT_VERB] is not None:
             for verb in tool[Indexes.T_DIRECT_VERB].split(", "):
                 if verb in self.verbs_in_step:
-                    print("RETURN FALSE BECAUSE " + verb + " in " + str(self.verbs_in_step))
+                    print("[is_implied_tool_applicable]RETURN FALSE BECAUSE " + verb + " in " + str(self.verbs_in_step))
                     return False
-        print("RETURN TRUE")
+        print("[is_implied_tool_applicable]RETURN TRUE")
         return True
 
     def remove_implied_tools(self, tool):
@@ -207,28 +269,29 @@ class FindImpliedTools:
             return not match_definition_to_recipe(tool, Indexes.T_NOT_SUBJECT, self.subjects_in_step)
         elif definition == "size":
             print("[is_tool_suitable] size")
-            return match_definition_to_recipe(tool, Indexes.T_SIZE, entire_recipe[Indexes.R_INGREDIENTS])
+            return match_definition_to_ingredient(tool, Indexes.T_SIZE, self.verbs_in_ingredient)
         elif definition == "not_size":
             print("[is_tool_suitable] not_size")
-            return not match_definition_to_recipe(tool, Indexes.T_NOT_SIZE, entire_recipe[Indexes.R_INGREDIENTS])
+            return not match_definition_to_ingredient(tool, Indexes.T_NOT_SIZE,
+                                                      self.verbs_in_ingredient)
         elif definition == "ingredient":
             print("[is_tool_suitable] ingredient")
-            return match_definition_to_recipe(tool, Indexes.T_INGREDIENT, entire_recipe[Indexes.R_INGREDIENTS])
+            return match_definition_to_ingredient(tool, Indexes.T_INGREDIENT,
+                                                  self.nouns_in_ingredient)
         elif definition == "not_ingredient":
             print("[is_tool_suitable] not_ingredient")
-            return not match_definition_to_recipe(tool, Indexes.T_NOT_INGREDIENT, entire_recipe[Indexes.R_INGREDIENTS])
+            return not match_definition_to_ingredient(tool, Indexes.T_NOT_INGREDIENT,
+                                                      self.nouns_in_ingredient)
         return False
 
     def handle_isa(self, tool, index):
         for concept in tool[index].split(" | "):
             if "&" in concept:
-                conj_counter = 0
                 conj_concept_list = concept.split(" & ")
                 for conj_concept in conj_concept_list:
-                    if concept_found_conceptNet(conj_concept, self.subjects_in_step):
-                        conj_counter += 1
-                if conj_counter == len(conj_concept_list):
-                    return True
+                    if not concept_found_conceptNet(conj_concept, self.subjects_in_step):
+                        continue
+                return True
             else:
                 if concept_found_conceptNet(concept, self.subjects_in_step):
                     return True

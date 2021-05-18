@@ -4,7 +4,7 @@ import sqlite3
 def sql_fetch_recipe_db():
     recipe_connection = sqlite3.connect('../data/raw_recipes/recipes1.db')
     recipe_cursor = recipe_connection.cursor()
-    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/freeze-bake-chicken-pot-pies';")
+    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/orange-cauliflower-chicken';")
     return recipe_cursor.fetchall()
 
 
