@@ -5,7 +5,7 @@ import csv
 from database_query import Indexes
 from database_query import sql_fetch_recipe_db
 from database_query import sql_fetch_util_db
-from conceptNet_api import concept_found_conceptNet
+from conceptNet_api import concept_found_concept_net
 
 
 def string_to_dictionary(prep_str):
@@ -28,17 +28,27 @@ def check_title(tool, recipe_title):
     return False
 
 
-def match_definition_to_recipe(tool, index, string_to_match):
+def match_definition_to_recipe(tool, index, subjects_in_step):
     for subject in tool[index].split(" | "):
         if "&" in subject:
+            counter = 0
             conj_concept_list = subject.split(" & ")
             for conj_subject in conj_concept_list:
-                if not (conj_subject in string_to_match):
-                    continue
-            return True
-        else:
-            if subject in string_to_match:
+                for key in subjects_in_step:
+                    for subject_target in subjects_in_step[key]:
+                        if subject_target == conj_subject:
+                            counter += 1
+            if counter < len(conj_concept_list)-1:
+                print("[match_definition_to_recipe] RETURN TRUE")
                 return True
+        else:
+            for key in subjects_in_step:
+                for subject_target in subjects_in_step[key]:
+                    if subject_target == subject:
+                        print("[match_definition_to_recipe] RETURN TRUE")
+                        return True
+    print("[match_definition_to_recipe] RETURN FALSE BECAUSE "+str(tool[index].split(" | "))+" NOT IN "+
+          str(subjects_in_step))
     return False
 
 
@@ -68,12 +78,28 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
     return False
 
 
+def match_definition_to_concept_net(tool, index, subjects_to_match, just_sentence):
+    for concept in tool[index].split(" | "):
+        if "&" in concept:
+            conj_concept_list = concept.split(" & ")
+            for conj_concept in conj_concept_list:
+                if not concept_found_concept_net(conj_concept, subjects_to_match, just_sentence):
+                    continue
+            return True
+        else:
+            if concept_found_concept_net(concept, subjects_to_match, just_sentence):
+                return True
+    return False
+
+
 class FindImpliedTools:
     def __init__(self):
         self.nlp = spacy.load('en_core_web_trf')
         self.cur_kitchenware = None
-        self.kitchenware = ['grill', 'barbecue', 'bbq', 'air fryer', 'skillet', 'pan', 'pot', 'saucepan', 'bowl',
-                            'casserole', 'baking sheet', 'mixer', 'blender', 'baking dish', 'foil dish']
+        self.kitchenware = {'grill': [], 'barbecue': [], 'bbq': [], 'air fryer': [], 'skillet': [], 'pan': [],
+                            'pot': [], 'saucepan': [], 'small bowl': [], 'medium bowl': [], 'large bowl': [],
+                            'casserole': [], 'baking sheet': [], 'mixer': [], 'blender': [], 'baking dish': [],
+                            'foil dish': []}
 
         self.entire_tool_kb = sql_fetch_util_db()
         recipe_rows = sql_fetch_recipe_db()
@@ -127,7 +153,7 @@ class FindImpliedTools:
             step = self.nlp(dictionary[key])
             sentences = list(step.sents)
 
-            self.find_verbs_and_nouns(sentences)
+            self.find_verbs_and_nouns_in_step(sentences)
 
             print(key, dictionary[key])
             print("NOUNS IN THIS STEP: " + str(self.subjects_in_step))
@@ -141,33 +167,45 @@ class FindImpliedTools:
                         self.edited_recipe = self.edited_recipe[:-1]
                     self.edited_recipe += str(token.text) + " "
                     if token.pos_ == "VERB" or token.pos_ == "PRON":
+                        if token.dep_ == "amod":
+                            continue
                         verb = token.lemma_.lower()
                         print("VERB: " + verb)
-                        self.find_tool_that_corresponds_to_verb(recipe, verb)
+                        self.find_tool_that_corresponds_to_verb(recipe, verb, num_sentence)
                 num_sentence += 1
 
             self.subjects_in_step = {}
             self.verbs_in_step = []
 
-    def find_verbs_and_nouns(self, step):
+    def find_verbs_and_nouns_in_step(self, step):
         num_sentences = 0
         for sentence in step:
-            sentence_index = 0
-            self.subjects_in_step[num_sentences] = []
-            for token in sentence:
-                if (token.pos_ == "VERB" or token.pos_ == "PRON") and not token.lemma_.lower() in self.verbs_in_step:
-                    self.verbs_in_step.append(token.lemma_.lower())
-                if token.pos_ == "NOUN":
-                    if token.dep_ == "compound" and not str(
-                            token.lemma_.lower() + " " + sentence[
-                                sentence_index + 1].lemma_.lower()) in self.subjects_in_step:
-                        self.subjects_in_step[num_sentences].append(
-                            token.lemma_.lower() + " " + sentence[sentence_index + 1].lemma_.lower())
-                    elif token.dep_ == "dobj" or token.dep_ == "pobj" and not token.lemma_.lower() in \
-                                                                              self.subjects_in_step:
-                        self.subjects_in_step[num_sentences].append(token.lemma_.lower())
-                sentence_index += 1
+            self.find_verbs_and_nouns_in_sentence(num_sentences, sentence)
             num_sentences += 1
+
+    def find_verbs_and_nouns_in_sentence(self, num_sentences, sentence):
+        i = 0
+        self.subjects_in_step[num_sentences] = []
+        while i < len(sentence):
+            print("[find_verbs_and_nouns_in_sentence]"+str(sentence[i].lemma_.lower()))
+            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON") and not sentence[i].lemma_.lower() in self.verbs_in_step:
+                self.verbs_in_step.append(sentence[i].lemma_.lower())
+            if sentence[i].pos_ == "NOUN":
+                if sentence[i].dep_ == "compound" and not str(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower()) in self.subjects_in_step:
+                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+                elif sentence[i].dep_ == "nsubj" or sentence[i].dep_ == "dobj" or sentence[i].dep_ == "pobj" and not sentence[i].lemma_.lower() in self.subjects_in_step:
+                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower())
+            elif sentence[i].lemma_.lower() == "small" or sentence[i].lemma_.lower() == "medium" or sentence[i].lemma_.lower() == "large":
+                if i+1 < len(sentence)-1 and "bowl" in sentence[i + 1].text.lower():
+                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+                    i += 1
+                elif i+2 < len(sentence)-1 and "bowl" in sentence[i + 2].text.lower():
+                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 2].lemma_.lower())
+                    i += 2
+                elif i+3 < len(sentence)-1 and "bowl" in sentence[i + 3].text.lower():
+                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 3].lemma_.lower())
+                    i += 3
+            i += 1
 
     def find_kitchenware(self, num_sentences):
         for noun in self.subjects_in_step[num_sentences]:
@@ -176,7 +214,7 @@ class FindImpliedTools:
                     self.cur_kitchenware = noun
                     break
 
-    def find_tool_that_corresponds_to_verb(self, recipe, verb):
+    def find_tool_that_corresponds_to_verb(self, recipe, verb, sentence_in_step):
         for tool in self.entire_tool_kb:
             kitchenware_is_appropriate = self.is_kitchenware_appropriate(tool)
 
@@ -189,7 +227,7 @@ class FindImpliedTools:
             if (tool[Indexes.T_AMBIGUOUS_VERB] is not None
                     and verb in tool[Indexes.T_AMBIGUOUS_VERB].split(", ")
                     and kitchenware_is_appropriate
-                    and self.check_tools_definition(tool, recipe)):
+                    and self.check_tools_definition(tool, recipe, sentence_in_step)):
                 print("[find_tool] added " + tool[Indexes.T_TOOL] + " because of " + verb + "\n\n")
                 self.append_tool_to_list(tool)
 
@@ -197,7 +235,7 @@ class FindImpliedTools:
                     and verb in tool[Indexes.T_IMPLIED].split(", ")
                     and kitchenware_is_appropriate
                     and self.is_implied_tool_applicable(tool)
-                    and self.check_tools_definition(tool, recipe)):
+                    and self.check_tools_definition(tool, recipe, sentence_in_step)):
                 print("[find_tool] added " + tool[Indexes.T_TOOL] + " because of " + verb + "\n\n")
                 self.append_tool_to_list(tool)
 
@@ -223,17 +261,12 @@ class FindImpliedTools:
         print("[is_implied_tool_applicable]RETURN TRUE")
         return True
 
-    def remove_implied_tools(self, tool):
-        temp = []
-        for implied_verb in tool[Indexes.T_IMPLIED]:
-            if implied_verb in self.verbs_in_step:
-                temp.append(implied_verb)
-        return temp
-
     def is_kitchenware_appropriate(self, tool):
         return tool[Indexes.T_LOCATION] is None or self.cur_kitchenware in tool[Indexes.T_LOCATION].split(" | ")
 
-    def check_tools_definition(self, tool, recipe):
+    def check_tools_definition(self, tool, recipe, sentence_in_step):
+        if tool[Indexes.T_DEFINE] is None:
+            return True
         definitions = tool[Indexes.T_DEFINE].split(" | ")
         print("[check_tools_definition] found tool " + tool[Indexes.T_TOOL] + " checking " + str(definitions))
 
@@ -242,25 +275,31 @@ class FindImpliedTools:
                 conjunction_counter = 0
                 conjunction_def_list = definition.split(" & ")
                 for conjunction_def in conjunction_def_list:
-                    if self.is_tool_suitable(tool, conjunction_def, recipe):
+                    if self.is_tool_suitable(tool, conjunction_def, recipe, sentence_in_step):
                         conjunction_counter += 1
                 if conjunction_counter == len(conjunction_def_list):
                     return True
             else:
-                if self.is_tool_suitable(tool, definition, recipe):
+                if self.is_tool_suitable(tool, definition, recipe, sentence_in_step):
                     return True
         return False
 
-    def is_tool_suitable(self, tool, definition, entire_recipe):
+    def is_tool_suitable(self, tool, definition, entire_recipe, sentence_in_step):
         if definition == "title":
             print("[is_tool_suitable] title")
             return check_title(tool, entire_recipe[Indexes.R_TITLE].lower())
         elif definition == "isa":
             print("[is_tool_suitable] ISA")
-            return self.handle_isa(tool, Indexes.T_ISA)
+            return match_definition_to_concept_net(tool, Indexes.T_ISA, self.subjects_in_step, False)
         elif definition == "not_isa":
             print("[is_tool_suitable] NOT_ISA")
-            return not self.handle_isa(tool, Indexes.T_NOT_ISA)
+            return not match_definition_to_concept_net(tool, Indexes.T_NOT_ISA, self.subjects_in_step, False)
+        elif definition == "isa s":
+            print("[is_tool_suitable] ISA S")
+            return match_definition_to_concept_net(tool, Indexes.T_ISA, self.subjects_in_step[sentence_in_step], True)
+        elif definition == "not_isa s":
+            print("[is_tool_suitable] ISA S")
+            return match_definition_to_concept_net(tool, Indexes.T_NOT_ISA, self.subjects_in_step[sentence_in_step], True)
         elif definition == "subject":
             print("[is_tool_suitable] SUBJECT")
             return match_definition_to_recipe(tool, Indexes.T_SUBJECT, self.subjects_in_step)
@@ -272,27 +311,11 @@ class FindImpliedTools:
             return match_definition_to_ingredient(tool, Indexes.T_SIZE, self.verbs_in_ingredient)
         elif definition == "not_size":
             print("[is_tool_suitable] not_size")
-            return not match_definition_to_ingredient(tool, Indexes.T_NOT_SIZE,
-                                                      self.verbs_in_ingredient)
+            return not match_definition_to_ingredient(tool, Indexes.T_NOT_SIZE, self.verbs_in_ingredient)
         elif definition == "ingredient":
             print("[is_tool_suitable] ingredient")
-            return match_definition_to_ingredient(tool, Indexes.T_INGREDIENT,
-                                                  self.nouns_in_ingredient)
+            return match_definition_to_ingredient(tool, Indexes.T_INGREDIENT, self.nouns_in_ingredient)
         elif definition == "not_ingredient":
             print("[is_tool_suitable] not_ingredient")
-            return not match_definition_to_ingredient(tool, Indexes.T_NOT_INGREDIENT,
-                                                      self.nouns_in_ingredient)
-        return False
-
-    def handle_isa(self, tool, index):
-        for concept in tool[index].split(" | "):
-            if "&" in concept:
-                conj_concept_list = concept.split(" & ")
-                for conj_concept in conj_concept_list:
-                    if not concept_found_conceptNet(conj_concept, self.subjects_in_step):
-                        continue
-                return True
-            else:
-                if concept_found_conceptNet(concept, self.subjects_in_step):
-                    return True
+            return not match_definition_to_ingredient(tool, Indexes.T_NOT_INGREDIENT, self.nouns_in_ingredient)
         return False
