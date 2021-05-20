@@ -8,46 +8,60 @@ def query_concept_net(step_object, target_concept):
     uri = "http://api.conceptnet.io/query?start=/c/en/"+str(step_object)+"&rel=/r/IsA&end=/c/en/"+str(target_concept)
     obj = requests.get(uri).json()
     obj.keys()
-    print(len(obj['edges']))
+    time.sleep(0.5)
     return len(obj['edges'])
 
 
-def concept_found_concept_net(target_concept, object_list, just_sentence):
-    print("[find_all_concepts] given list: " + str(object_list) + " and target concept " + str(target_concept))
+def loop_over_object_match_for_all(target_concept, object_list):
+    for step_object in object_list:
+        if len(step_object.split(" ")) > 1:
+            continue
+        else:
+            target_concept_for_all_objects = ast.literal_eval(target_concept)
+            num_of_concepts_found = query_concept_net(step_object, target_concept_for_all_objects)
+            if num_of_concepts_found == 0:
+                return False
+    return True
+
+
+def all_objects_need_to_match_concept(target_concept, object_list, just_sentence):
     if just_sentence:
-        for step_object in object_list:
-            if ':' in step_object:
-                list_of_target_concept_that_need_to_hold = ast.literal_eval(step_object)
-                for target_concept_all in list_of_target_concept_that_need_to_hold:
-                    num_of_concepts_found = query_concept_net(step_object, target_concept_all)
-                    if num_of_concepts_found == 0:
-                        print("[concept_found_in_step] returning True")
-                        return False
-                    time.sleep(1)
-            if len(step_object.split(" ")) > 1:
-                continue
-            else:
-                num_of_concepts_found = query_concept_net(step_object, target_concept)
-                if num_of_concepts_found > 0:
-                    print("[concept_found_in_step] returning True")
-                    return True
-            time.sleep(1)
+        return loop_over_object_match_for_all(target_concept, object_list)
     else:
         for key in object_list:
-            for step_object in object_list[key]:
-                if ':' in step_object:
-                    list_of_target_concept_that_need_to_hold = ast.literal_eval(step_object)
-                    for target_concept_all in list_of_target_concept_that_need_to_hold:
-                        num_of_concepts_found = query_concept_net(step_object, target_concept_all)
-                        if num_of_concepts_found == 0:
-                            print("[concept_found_in_step] returning True")
-                            return False
-                        time.sleep(1)
-                if len(step_object.split(" ")) > 1:
-                    continue
-                num_of_concepts_found = query_concept_net(step_object, target_concept)
-                if num_of_concepts_found > 0:
-                    print("[concept_found_in_step] returning True")
-                    return True
-                time.sleep(1)
+            if not loop_over_object_match_for_all(target_concept, object_list[key]):
+                return False
+    return True
+
+
+def loop_over_object_match_for_some(target_concept, object_list):
+    for step_object in object_list:
+        if len(step_object.split(" ")) > 1:
+            continue
+        else:
+            num_of_concepts_found = query_concept_net(step_object, target_concept)
+            if num_of_concepts_found > 0:
+                return True
     return False
+
+
+def one_object_need_to_match_concept(target_concept, object_list, just_sentence):
+    if just_sentence:
+        return loop_over_object_match_for_some(target_concept, object_list)
+    else:
+        for key in object_list:
+            if loop_over_object_match_for_some(target_concept, object_list[key]):
+                return True
+    return False
+
+
+def concept_found_concept_net(target_concept, object_list, just_sentence):
+    print("[concept_found_concept_net] given list: " + str(object_list) + " and target concept " + str(target_concept))
+    if ':' in target_concept:
+        temp1 = all_objects_need_to_match_concept(target_concept, object_list, just_sentence)
+        print("[concept_found_concept_net] FOR ALL RETURNING: "+str(temp1))
+        return temp1
+    else:
+        temp2 = one_object_need_to_match_concept(target_concept, object_list, just_sentence)
+        print("[concept_found_concept_net] NOT ALL RETURNING: "+str(temp2))
+        return temp2
