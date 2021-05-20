@@ -50,7 +50,8 @@ def match_definition_to_recipe(tool, index, subjects_in_step):
                     if subject_target == subject:
                         print("[match_definition_to_recipe] RETURN TRUE")
                         return True
-    print("[match_definition_to_recipe] RETURN FALSE BECAUSE "+str(tool[index].split(" | "))+" NOT IN "+str(subjects_in_step))
+    print("[match_definition_to_recipe] RETURN FALSE BECAUSE " + str(tool[index].split(" | ")) + " NOT IN " + str(
+        subjects_in_step))
     return False
 
 
@@ -65,7 +66,8 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
             for conj_keyword in conj_keyword_list:
                 for ingredient in ingredient_list:
                     if ingredient == conj_keyword:
-                        print("[match_definition_to_ingredient] increase counter because "+str(ingredient)+" is equal to "+str(conj_keyword))
+                        print("[match_definition_to_ingredient] increase counter because " + str(
+                            ingredient) + " is equal to " + str(conj_keyword))
                         conj_counter += 1
             if conj_counter == len(conj_keyword_list):
                 print("[match_definition_to_ingredient] return True because counter equals length of conjunction def")
@@ -73,7 +75,8 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
         else:
             for ingredient in ingredient_list:
                 if ingredient == keyword:
-                    print("[match_definition_to_ingredient] RETURN TRUE because "+str(ingredient)+" is equal to "+str(keyword))
+                    print("[match_definition_to_ingredient] RETURN TRUE because " + str(
+                        ingredient) + " is equal to " + str(keyword))
                     return True
     print("[match_definition_to_ingredient] RETURN FALSE")
     return False
@@ -87,7 +90,7 @@ def match_definition_to_concept_net(tool, index, subjects_to_match, just_sentenc
             for conj_concept in conj_concept_list:
                 if concept_found_concept_net(conj_concept, subjects_to_match, just_sentence):
                     counter += 1
-            if counter == len(conj_concept_list)-1:
+            if counter == len(conj_concept_list) - 1:
                 return True
         else:
             if concept_found_concept_net(concept, subjects_to_match, just_sentence):
@@ -131,8 +134,10 @@ class FindImpliedTools:
         # write_to_csv(all_data)
 
     def initialize_kitchenware_array(self):
-        for curr_kitchenware in self.entire_kitchenware_kb:
-            self.kitchenware.append(curr_kitchenware[KitchenwareI.KITCHENWARE])
+        for row in self.entire_kitchenware_kb:
+            for kitchenware in row[KitchenwareI.KITCHENWARE].split(", "):
+                if kitchenware not in self.kitchenware:
+                    self.kitchenware.append(kitchenware)
 
     def parse_ingredients(self, ingredient_str):
         ingredient_list = string_to_dictionary(ingredient_str)
@@ -188,28 +193,13 @@ class FindImpliedTools:
             self.verbs_in_step = []
 
     def check_potential_kitchenware_change(self, verb):
-        temp = []
-        for kitchenware in self.entire_kitchenware_kb:
-            if kitchenware[KitchenwareI.VERBS1] is not None and verb in kitchenware[KitchenwareI.VERBS1]:
-                temp.append(kitchenware)
-            elif kitchenware[KitchenwareI.VERBS2] is not None and verb in kitchenware[KitchenwareI.VERBS2]:
-                temp.append(kitchenware)
-        print("[check_potential_kitchenware_change] "+str(temp))
-        for kitchenware in temp:
-            if self.cur_kitchenware == kitchenware[KitchenwareI.KITCHENWARE]:
-                print("[check_potential_kitchenware_change] current kitchenware remains: " + str(self.cur_kitchenware))
-                return
-        if len(temp) > 1:
-            for kitchenware in temp:
-                if kitchenware[KitchenwareI.DEFAULT1] == 1:
-                    self.cur_kitchenware = kitchenware[KitchenwareI.KITCHENWARE]
-                    break
-                elif kitchenware[KitchenwareI.DEFAULT2] == 1:
-                    self.cur_kitchenware = kitchenware[KitchenwareI.KITCHENWARE]
-                    break
-        elif len(temp) == 1:
-            self.cur_kitchenware = temp[0][KitchenwareI.KITCHENWARE]
-        print("[check_potential_kitchenware_change] changed current kitchenware to: "+str(self.cur_kitchenware))
+        for row in self.entire_kitchenware_kb:
+            if row[KitchenwareI.VERB] == verb:
+                if self.cur_kitchenware not in row[KitchenwareI.KITCHENWARE]:
+                    print("[check_potential_kitchenware_change] changed cur_kitchenware from " +
+                          str(self.cur_kitchenware) + " to " + str(row[KitchenwareI.KITCHENWARE]))
+                    self.cur_kitchenware = row[KitchenwareI.DEFAULT]
+                break
 
     def find_verbs_and_nouns_in_step(self, step):
         num_sentences = 0
@@ -221,23 +211,31 @@ class FindImpliedTools:
         i = 0
         self.subjects_in_step[num_sentences] = []
         while i < len(sentence):
-            print("[find_verbs_and_nouns_in_sentence]"+str(sentence[i].lemma_.lower()))
-            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON") and not sentence[i].lemma_.lower() in self.verbs_in_step:
+            print("[find_verbs_and_nouns_in_sentence]" + str(sentence[i].lemma_.lower()))
+            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON") and not sentence[
+                                                                                      i].lemma_.lower() in self.verbs_in_step:
                 self.verbs_in_step.append(sentence[i].lemma_.lower())
             if sentence[i].pos_ == "NOUN":
-                if sentence[i].dep_ == "compound" and not str(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower()) in self.subjects_in_step:
-                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
-                elif sentence[i].dep_ == "nsubj" or sentence[i].dep_ == "dobj" or sentence[i].dep_ == "pobj" and not sentence[i].lemma_.lower() in self.subjects_in_step:
+                if sentence[i].dep_ == "compound" and not str(
+                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower()) in self.subjects_in_step:
+                    self.subjects_in_step[num_sentences].append(
+                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+                elif sentence[i].dep_ == "nsubj" or sentence[i].dep_ == "dobj" or sentence[i].dep_ == "pobj" and not \
+                sentence[i].lemma_.lower() in self.subjects_in_step:
                     self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower())
-            elif sentence[i].lemma_.lower() == "small" or sentence[i].lemma_.lower() == "medium" or sentence[i].lemma_.lower() == "large":
-                if i+1 < len(sentence)-1 and "bowl" in sentence[i + 1].text.lower():
-                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+            elif sentence[i].lemma_.lower() == "small" or sentence[i].lemma_.lower() == "medium" or sentence[
+                i].lemma_.lower() == "large":
+                if i + 1 < len(sentence) - 1 and "bowl" in sentence[i + 1].text.lower():
+                    self.subjects_in_step[num_sentences].append(
+                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
                     i += 1
-                elif i+2 < len(sentence)-1 and "bowl" in sentence[i + 2].text.lower():
-                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 2].lemma_.lower())
+                elif i + 2 < len(sentence) - 1 and "bowl" in sentence[i + 2].text.lower():
+                    self.subjects_in_step[num_sentences].append(
+                        sentence[i].lemma_.lower() + " " + sentence[i + 2].lemma_.lower())
                     i += 2
-                elif i+3 < len(sentence)-1 and "bowl" in sentence[i + 3].text.lower():
-                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower() + " " + sentence[i + 3].lemma_.lower())
+                elif i + 3 < len(sentence) - 1 and "bowl" in sentence[i + 3].text.lower():
+                    self.subjects_in_step[num_sentences].append(
+                        sentence[i].lemma_.lower() + " " + sentence[i + 3].lemma_.lower())
                     i += 3
             i += 1
 
@@ -307,13 +305,13 @@ class FindImpliedTools:
         print("[check_tools_definition] found tool " + tool[ToolI.TOOL] + " checking " + str(definitions))
 
         for definition in definitions:
-            print("in loop. Checking: "+str(definition)+" for "+str(tool[ToolI.TOOL]))
+            print("in loop. Checking: " + str(definition) + " for " + str(tool[ToolI.TOOL]))
             if " & " in definition:
                 conjunction_def_list = definition.split(" & ")
-                print("[check_tools_definition] FOUND CONJUNCTION DEFINITION"+str(conjunction_def_list))
+                print("[check_tools_definition] FOUND CONJUNCTION DEFINITION" + str(conjunction_def_list))
                 all_definitions_hold = True
                 for conjunction_def in conjunction_def_list:
-                    print("CONJUNCTION ITERATION: "+str(conjunction_def))
+                    print("CONJUNCTION ITERATION: " + str(conjunction_def))
                     if not self.is_tool_suitable(tool, conjunction_def, recipe, sentence_in_step):
                         all_definitions_hold = False
                         break
@@ -321,7 +319,7 @@ class FindImpliedTools:
                     return True
             else:
                 tool_suitable = self.is_tool_suitable(tool, definition, recipe, sentence_in_step)
-                print("[check_tools_definition] in else. is_tool_suitable returned: "+str(tool_suitable))
+                print("[check_tools_definition] in else. is_tool_suitable returned: " + str(tool_suitable))
                 if tool_suitable:
                     return True
         print("[check_tools_definition] returning False")
@@ -329,7 +327,7 @@ class FindImpliedTools:
 
     def is_tool_suitable(self, tool, definition, entire_recipe, sentence_in_step):
         definition = definition.strip()
-        print("|"+str(definition)+"|")
+        print("|" + str(definition) + "|")
         if definition == "title":
             print("[is_tool_suitable] title")
             return check_title(tool, entire_recipe[ToolI.TITLE].lower())

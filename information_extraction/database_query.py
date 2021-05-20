@@ -4,7 +4,7 @@ import sqlite3
 def sql_fetch_recipe_db():
     recipe_connection = sqlite3.connect('../data/raw_recipes/recipes1.db')
     recipe_cursor = recipe_connection.cursor()
-    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/healthy-banana-pancakes';")
+    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/one-pot-broccoli-cheddar-soup';")
     return recipe_cursor.fetchall()
 
 
@@ -53,8 +53,6 @@ class RecipeI:
 
 
 class KitchenwareI:
-    KITCHENWARE = 0
-    VERBS1 = 1
-    DEFAULT1 = 2
-    VERBS2 = 3
-    DEFAULT2 = 4
+    VERB = 0
+    KITCHENWARE = 1
+    DEFAULT = 2
