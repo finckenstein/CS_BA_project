@@ -16,11 +16,10 @@ def loop_over_object_match_for_all(target_concept, object_list):
     for step_object in object_list:
         if len(step_object.split(" ")) > 1:
             continue
-        else:
-            target_concept_for_all_objects = ast.literal_eval(target_concept)
-            num_of_concepts_found = query_concept_net(step_object, target_concept_for_all_objects)
-            if num_of_concepts_found == 0:
-                return False
+        target_concept_for_all_objects = ast.literal_eval(target_concept)
+        num_of_concepts_found = query_concept_net(step_object, target_concept_for_all_objects)
+        if num_of_concepts_found == 0:
+            return False
     return True
 
 
@@ -38,10 +37,9 @@ def loop_over_object_match_for_some(target_concept, object_list):
     for step_object in object_list:
         if len(step_object.split(" ")) > 1:
             continue
-        else:
-            num_of_concepts_found = query_concept_net(step_object, target_concept)
-            if num_of_concepts_found > 0:
-                return True
+        num_of_concepts_found = query_concept_net(step_object, target_concept)
+        if num_of_concepts_found > 0:
+            return True
     return False
 
 

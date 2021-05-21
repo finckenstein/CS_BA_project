@@ -25,7 +25,9 @@ def write_to_csv(data):
 
 
 def check_title(tool, recipe_title):
+    print("[check_title] current title: " + str(recipe_title))
     for curr_tool_title in tool[ToolI.TITLE].split(" | "):
+        print("[check_title] tool:" + str(curr_tool_title))
         if str(curr_tool_title) in str(recipe_title):
             return True
     return False
@@ -85,12 +87,13 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
 def match_definition_to_concept_net(tool, index, subjects_to_match, just_sentence):
     for concept in tool[index].split(" | "):
         if "&" in concept:
-            counter = 0
             conj_concept_list = concept.split(" & ")
+            all_concepts_true = True
             for conj_concept in conj_concept_list:
-                if concept_found_concept_net(conj_concept, subjects_to_match, just_sentence):
-                    counter += 1
-            if counter == len(conj_concept_list) - 1:
+                if not concept_found_concept_net(conj_concept, subjects_to_match, just_sentence):
+                    all_concepts_true = False
+                    break
+            if all_concepts_true:
                 return True
         else:
             if concept_found_concept_net(concept, subjects_to_match, just_sentence):
@@ -168,7 +171,7 @@ class FindImpliedTools:
 
             self.find_verbs_and_nouns_in_step(sentences)
 
-            print(key, dictionary[key])
+            print("\n\n", key, dictionary[key])
             print("NOUNS IN THIS STEP: " + str(self.subjects_in_step))
             print("VERBS IN THIS STEP: " + str(self.verbs_in_step))
 
@@ -176,28 +179,57 @@ class FindImpliedTools:
             for sentence in sentences:
                 self.find_kitchenware(num_sentence)
                 print("[parse_preparation] current kitchenware: " + str(self.cur_kitchenware))
-                for token in sentence:
+                index = 0
+                while index < len(sentence):
+                    token = sentence[index]
                     if token.pos_ == "PUNCT":
                         self.edited_recipe = self.edited_recipe[:-1]
                     self.edited_recipe += str(token.text) + " "
                     if token.pos_ == "VERB" or token.pos_ == "PRON":
                         if token.dep_ == "amod":
+                            index += 1
                             continue
                         verb = token.lemma_.lower()
                         print("VERB: " + verb)
                         self.check_potential_kitchenware_change(verb)
                         self.find_tool_that_corresponds_to_verb(recipe, verb, num_sentence)
+                    elif token.pos_ == "NOUN":
+                        if token.dep_ == "compound":
+                            self.match_noun_to_kitchenware(token.text.lower() + " " + sentence[index + 1].text.lower())
+                        else:
+                            self.match_noun_to_kitchenware(token.text.lower())
+                    elif token.pos_ == "ADJ":
+                        if (token.text.lower() == "large"
+                                or token.text.lower() == "medium"
+                                or token.text.lower() == "small"):
+                            if sentence[index + 1].text.lower() == "bowl":
+                                print("FOUND: " + token.text.lower() + sentence[index + 1].text.lower())
+                                self.match_noun_to_kitchenware(token.text.lower() + " " + sentence[index+1].text.lower())
+                                index += 1
+                                self.edited_recipe += str(sentence[index].text) + " "
+                            elif sentence[index + 2].text.lower() == "bowl":
+                                print("FOUND: " + token.text.lower() + sentence[index + 2].text.lower())
+                                self.match_noun_to_kitchenware(token.text.lower() + " " + sentence[index+2].text.lower())
+                                index += 2
+                                self.edited_recipe += str(sentence[index-1].text) + " " + str(sentence[index].text)
+                    index += 1
                 num_sentence += 1
 
             self.subjects_in_step = {}
             self.verbs_in_step = []
 
+    def match_noun_to_kitchenware(self, noun):
+        if not noun == self.cur_kitchenware and noun in self.kitchenware:
+            print("[match_noun_to_kitchenware] changed kitchenware from " + self.cur_kitchenware + " to " + noun)
+            self.cur_kitchenware = noun
+
     def check_potential_kitchenware_change(self, verb):
         for row in self.entire_kitchenware_kb:
             if row[KitchenwareI.VERB] == verb:
-                if self.cur_kitchenware not in row[KitchenwareI.KITCHENWARE]:
+                if (self.cur_kitchenware is None
+                        or self.cur_kitchenware not in row[KitchenwareI.KITCHENWARE]):
                     print("[check_potential_kitchenware_change] changed cur_kitchenware from " +
-                          str(self.cur_kitchenware) + " to " + str(row[KitchenwareI.KITCHENWARE]))
+                          str(self.cur_kitchenware) + " to " + str(row[KitchenwareI.DEFAULT]))
                     self.cur_kitchenware = row[KitchenwareI.DEFAULT]
                 break
 
@@ -211,20 +243,27 @@ class FindImpliedTools:
         i = 0
         self.subjects_in_step[num_sentences] = []
         while i < len(sentence):
-            print("[find_verbs_and_nouns_in_sentence]" + str(sentence[i].lemma_.lower()))
-            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON") and not sentence[
-                                                                                      i].lemma_.lower() in self.verbs_in_step:
+            # print("[find_verbs_and_nouns_in_sentence]" + str(sentence[i].lemma_.lower()))
+            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON"
+                    and not sentence[i].lemma_.lower() in self.verbs_in_step):
                 self.verbs_in_step.append(sentence[i].lemma_.lower())
             if sentence[i].pos_ == "NOUN":
-                if sentence[i].dep_ == "compound" and not str(
-                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower()) in self.subjects_in_step:
+                if (sentence[i].dep_ == "compound"
+                        and not str(sentence[i].lemma_.lower() + " " + sentence[
+                            i + 1].lemma_.lower()) in self.subjects_in_step):
                     self.subjects_in_step[num_sentences].append(
                         sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
-                elif sentence[i].dep_ == "nsubj" or sentence[i].dep_ == "dobj" or sentence[i].dep_ == "pobj" and not \
-                sentence[i].lemma_.lower() in self.subjects_in_step:
+                    self.subjects_in_step[num_sentences].append(sentence[i + 1].lemma_.lower())
+                    i += 1
+                elif (sentence[i].dep_ == "nsubj"
+                      or sentence[i].dep_ == "dobj"
+                      or sentence[i].dep_ == "pobj"
+                      or sentence[i].dep_ == "conj"
+                      and not sentence[i].lemma_.lower() in self.subjects_in_step):
                     self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower())
-            elif sentence[i].lemma_.lower() == "small" or sentence[i].lemma_.lower() == "medium" or sentence[
-                i].lemma_.lower() == "large":
+            elif (sentence[i].lemma_.lower() == "small"
+                  or sentence[i].lemma_.lower() == "medium"
+                  or sentence[i].lemma_.lower() == "large"):
                 if i + 1 < len(sentence) - 1 and "bowl" in sentence[i + 1].text.lower():
                     self.subjects_in_step[num_sentences].append(
                         sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
@@ -330,7 +369,7 @@ class FindImpliedTools:
         print("|" + str(definition) + "|")
         if definition == "title":
             print("[is_tool_suitable] title")
-            return check_title(tool, entire_recipe[ToolI.TITLE].lower())
+            return check_title(tool, entire_recipe[RecipeI.TITLE].lower())
         elif definition == "isa":
             print("[is_tool_suitable] ISA")
             return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, False)
