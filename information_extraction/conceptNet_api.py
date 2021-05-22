@@ -61,3 +61,4 @@ def match_definition_to_concept_net(tool, index, subjects_in_step, possible_key)
         else:
             if target_concept in isa_rel_for_subjects_in_step:
                 return True
+    return False
