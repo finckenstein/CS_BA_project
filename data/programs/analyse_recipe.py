@@ -10,5 +10,5 @@ if __name__ == "__main__":
     rows = c.fetchall()
 
     for row in rows:
-        if " top " in row[7].lower() and "dough" in row[7].lower():
+        if " coat " in row[7].lower() and not (" toss " in row[7].lower()):
             print(row[0], row[7])

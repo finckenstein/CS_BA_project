@@ -355,16 +355,16 @@ class FindImpliedTools:
             return check_title(tool, entire_recipe[RecipeI.TITLE].lower())
         elif definition == "isa":
             print("[is_tool_suitable] ISA")
-            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, 0, True)
+            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, 0)
         elif definition == "not_isa":
             print("[is_tool_suitable] NOT_ISA")
-            return not match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, 0, False)
+            return not match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, 0)
         elif definition == "isa s":
             print("[is_tool_suitable] ISA S")
-            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, sentence_in_step, True)
+            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, sentence_in_step)
         elif definition == "not_isa s":
             print("[is_tool_suitable] NOT_ISA S")
-            return match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, sentence_in_step, False)
+            return match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, sentence_in_step)
         elif definition == "subject":
             print("[is_tool_suitable] SUBJECT")
             return match_definition_to_recipe(tool, ToolI.SUBJECT, self.subjects_in_step)
