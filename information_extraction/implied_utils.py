@@ -8,7 +8,7 @@ from database_query import KitchenwareI
 from database_query import sql_fetch_recipe_db
 from database_query import sql_fetch_tools_db
 from database_query import sql_fetch_kitchenware_db
-from conceptNet_api import concept_found_concept_net
+from conceptNet_api import match_definition_to_concept_net
 
 
 def string_to_dictionary(prep_str):
@@ -81,23 +81,6 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
                         ingredient) + " is equal to " + str(keyword))
                     return True
     print("[match_definition_to_ingredient] RETURN FALSE")
-    return False
-
-
-def match_definition_to_concept_net(tool, index, subjects_to_match, just_sentence):
-    for concept in tool[index].split(" | "):
-        if "&" in concept:
-            conj_concept_list = concept.split(" & ")
-            all_concepts_true = True
-            for conj_concept in conj_concept_list:
-                if not concept_found_concept_net(conj_concept, subjects_to_match, just_sentence):
-                    all_concepts_true = False
-                    break
-            if all_concepts_true:
-                return True
-        else:
-            if concept_found_concept_net(concept, subjects_to_match, just_sentence):
-                return True
     return False
 
 
@@ -372,16 +355,16 @@ class FindImpliedTools:
             return check_title(tool, entire_recipe[RecipeI.TITLE].lower())
         elif definition == "isa":
             print("[is_tool_suitable] ISA")
-            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, False)
+            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, 0, True)
         elif definition == "not_isa":
             print("[is_tool_suitable] NOT_ISA")
-            return not match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, False)
+            return not match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, 0, False)
         elif definition == "isa s":
             print("[is_tool_suitable] ISA S")
-            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step[sentence_in_step], True)
+            return match_definition_to_concept_net(tool, ToolI.ISA, self.subjects_in_step, sentence_in_step, True)
         elif definition == "not_isa s":
             print("[is_tool_suitable] NOT_ISA S")
-            return match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step[sentence_in_step], True)
+            return match_definition_to_concept_net(tool, ToolI.NOT_ISA, self.subjects_in_step, sentence_in_step, False)
         elif definition == "subject":
             print("[is_tool_suitable] SUBJECT")
             return match_definition_to_recipe(tool, ToolI.SUBJECT, self.subjects_in_step)

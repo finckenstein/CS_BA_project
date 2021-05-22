@@ -3,63 +3,57 @@ import time
 import ast
 
 
-def query_concept_net(step_object, target_concept):
+def query_concept_net(step_object):
     print("[find_all_concepts] current object: " + step_object)
-    uri = "http://api.conceptnet.io/query?start=/c/en/"+str(step_object)+"&rel=/r/IsA&end=/c/en/"+str(target_concept)
+    uri = "http://api.conceptnet.io/query?start=/c/en/"+str(step_object)+"&rel=/r/IsA"
     obj = requests.get(uri).json()
     obj.keys()
     time.sleep(0.5)
-    return len(obj['edges'])
+    return obj['edges']
 
 
-def loop_over_object_match_for_all(target_concept, object_list):
-    for step_object in object_list:
-        if len(step_object.split(" ")) > 1:
-            continue
-        target_concept_for_all_objects = ast.literal_eval(target_concept)
-        num_of_concepts_found = query_concept_net(step_object, target_concept_for_all_objects)
-        if num_of_concepts_found == 0:
-            return False
-    return True
-
-
-def all_objects_need_to_match_concept(target_concept, object_list, just_sentence):
-    if just_sentence:
-        return loop_over_object_match_for_all(target_concept, object_list)
+def convert_dictionary_to_list(subjects_in_step, possible_key):
+    temp = []
+    if possible_key == 0:
+        for key in subjects_in_step:
+            for nouns in subjects_in_step[key]:
+                temp.append(nouns)
     else:
-        for key in object_list:
-            if not loop_over_object_match_for_all(target_concept, object_list[key]):
-                return False
-    return True
+        temp = subjects_in_step[possible_key]
+    return temp
 
 
-def loop_over_object_match_for_some(target_concept, object_list):
-    for step_object in object_list:
-        if len(step_object.split(" ")) > 1:
-            continue
-        num_of_concepts_found = query_concept_net(step_object, target_concept)
-        if num_of_concepts_found > 0:
-            return True
-    return False
+def fetch_relations_for_subjects(subjects):
+    relations = []
+    for subject in subjects:
+        relations.append(query_concept_net(subject))
+    return relations
 
 
-def one_object_need_to_match_concept(target_concept, object_list, just_sentence):
-    if just_sentence:
-        return loop_over_object_match_for_some(target_concept, object_list)
-    else:
-        for key in object_list:
-            if loop_over_object_match_for_some(target_concept, object_list[key]):
+def match_definition_to_concept_net(tool, index, subjects_in_step, possible_key, isa):
+    subjects = convert_dictionary_to_list(subjects_in_step, possible_key)
+    isa_rel_for_subjects_in_step = fetch_relations_for_subjects(subjects)
+
+    for target_concept in tool[index].split(" | "):
+        if " & " in target_concept:
+            all_true = True
+            for conj_target_concept in target_concept.split(" & "):
+                if conj_target_concept not in isa_rel_for_subjects_in_step:
+                    all_true = False
+                    break
+            if all_true:
                 return True
-    return False
+        elif "all:[" in target_concept:
+            target_concept_all = ast.literal_eval(target_concept)
+            all_true = True
+            for found_isa in isa_rel_for_subjects_in_step:
+                if target_concept_all not in found_isa:
+                    all_true = False
+                    break
+            if all_true:
+                return True
+        else:
+            if target_concept in isa_rel_for_subjects_in_step:
+                return True
 
 
-def concept_found_concept_net(target_concept, object_list, just_sentence):
-    print("[concept_found_concept_net] given list: " + str(object_list) + " and target concept " + str(target_concept))
-    if ':' in target_concept:
-        temp1 = all_objects_need_to_match_concept(target_concept, object_list, just_sentence)
-        print("[concept_found_concept_net] FOR ALL RETURNING: "+str(temp1))
-        return temp1
-    else:
-        temp2 = one_object_need_to_match_concept(target_concept, object_list, just_sentence)
-        print("[concept_found_concept_net] NOT ALL RETURNING: "+str(temp2))
-        return temp2
