@@ -1,22 +1,26 @@
+#!/usr/bin/env python3
 import sqlite3
 
 
-def sql_fetch_recipe_db():
-    recipe_connection = sqlite3.connect('../data/raw_recipes/recipes1.db')
+def sql_fetch_recipe_db(url, path):
+    recipe_connection = sqlite3.connect(path+'data/raw_recipes/recipes1.db')
     recipe_cursor = recipe_connection.cursor()
-    recipe_cursor.execute("SELECT * FROM Recipes WHERE URL=='https://tasty.co/recipe/somali-bariis-as-made-by-amal-dalmar';")
+    if url == "":
+        recipe_cursor.execute("SELECT * FROM Recipes;")
+    else:
+        recipe_cursor.execute("SELECT * FROM Recipes WHERE "+url+";")
     return recipe_cursor.fetchall()
 
 
-def sql_fetch_tools_db():
-    utils_connection = sqlite3.connect('../data/constructed_knowledge/tools.db')
+def sql_fetch_tools_db(path):
+    utils_connection = sqlite3.connect(path+'data/constructed_knowledge/tools.db')
     utils_cursor = utils_connection.cursor()
     utils_cursor.execute("SELECT * FROM Tools;")
     return utils_cursor.fetchall()
 
 
-def sql_fetch_kitchenware_db():
-    utils_connection = sqlite3.connect('../data/constructed_knowledge/kitchenware.db')
+def sql_fetch_kitchenware_db(path):
+    utils_connection = sqlite3.connect(path+'data/constructed_knowledge/kitchenware.db')
     utils_cursor = utils_connection.cursor()
     utils_cursor.execute("SELECT * FROM Kitchenware;")
     return utils_cursor.fetchall()

@@ -26,6 +26,8 @@ def convert_dictionary_to_list(subjects_in_step, possible_key):
 def fetch_relations_for_subjects(subjects):
     relations = []
     for subject in subjects:
+        if len(subject.split(" ")) > 1:
+            continue
         relations.append(query_concept_net(subject))
     return relations
 
