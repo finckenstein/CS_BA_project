@@ -1,6 +1,6 @@
 Verb,Associated_Tool,Default
 cook,"pot, saucepan, pan, skillet",skillet
-simmer,"pot, saucepan",pot
+simmer,"pot, saucepan, pan, skillet",pot
 fry,"pan, skillet, grill, barbecue, bbq, air fryer",skillet
 sear,"pan, skillet, grill, barbecue, bbq, air fryer",skillet
 roast,"pan, skillet, grill, barbecue, bbq, air fryer",skillet
