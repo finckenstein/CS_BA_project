@@ -5,6 +5,7 @@ import spacy
 import os
 import sys
 from conceptNet_api import match_to_concept_net
+from conceptNet_api import filter_out_non_foods
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('database_query'))))
 import database_query as db
 
@@ -85,25 +86,28 @@ def match_definition_to_ingredient(tool, index, ingredient_list):
 
 class FindImpliedTools:
     def __init__(self):
-        recipe_rows = db.sql_fetch_recipe_db("URL=='https://tasty.co/recipe/orange-cauliflower-chicken'", "../")
-        self.entire_tool_kb = db.sql_fetch_tools_db("../")
-        self.entire_kitchenware_kb = db.sql_fetch_kitchenware_db("../")
         self.nlp = spacy.load('en_core_web_trf')
 
+        self.entire_kitchenware_kb = db.sql_fetch_kitchenware_db("../")
         self.cur_kitchenware = None
         self.kitchenware = []
         self.initialize_kitchenware_array()
         print(self.kitchenware)
 
-        self.edited_recipe = ""
+        self.entire_tool_kb = db.sql_fetch_tools_db("../")
         self.tools = []
         self.verbs_in_step = []
-        self.verbs_in_ingredient = []
-        self.nouns_in_ingredient = []
         self.subjects_in_step = {}
+
+        self.verbs_in_ingredient = []
+        self.foods_in_ingredient = []
+
+        self.edited_recipe = ""
 
         all_data = []
 
+        recipe_rows = db.sql_fetch_recipe_db("URL=='https://tasty.co/recipe/somali-bariis-as-made-by-amal-dalmar'",
+                                             "../")
         for recipe in recipe_rows:
             self.parse_ingredients(recipe[db.RecipeI.INGREDIENTS])
             self.parse_recipe(recipe)
@@ -111,7 +115,7 @@ class FindImpliedTools:
             all_data.append(dic)
 
             self.verbs_in_ingredient = []
-            self.nouns_in_ingredient = []
+            self.foods_in_ingredient = []
             self.tools = []
             self.edited_recipe = ""
 
@@ -124,25 +128,42 @@ class FindImpliedTools:
                 if kitchenware not in self.kitchenware:
                     self.kitchenware.append(kitchenware)
 
+    def fetch_nouns_and_initialize_verbs(self, ingredient_elem):
+        temp_nouns = []
+        token_index = 0
+        elem_spacy = self.nlp(ingredient_elem)
+
+        while token_index < len(elem_spacy):
+            token = elem_spacy[token_index]
+            if token.pos_ == "NOUN":
+                noun = token.lemma_.lower()
+                print("noun: " + noun)
+                if token.dep_ == "compound":
+                    temp_nouns.append(noun + " " + elem_spacy[token_index + 1].lemma_.lower())
+                    token_index += 1
+                elif noun not in str(temp_nouns):
+                    temp_nouns.append(noun)
+            elif token.pos_ == "VERB" and not token.lemma_.lower() in self.verbs_in_ingredient:
+                self.verbs_in_ingredient.append(token.lemma_.lower())
+            token_index += 1
+
+        print("nouns found: " + str(temp_nouns))
+        return temp_nouns
+
     def parse_ingredients(self, ingredient_str):
         ingredient_list = string_to_dictionary(ingredient_str)
+        elem_index = 0
+
         for key in ingredient_list:
             for ingredient_elem in ingredient_list[key]:
-                index = 0
-                ingredient_elem_spacy = self.nlp(ingredient_elem)
-                for token in ingredient_elem_spacy:
-                    if token.pos_ == "NOUN":
-                        if token.dep_ == "compound":
-                            self.nouns_in_ingredient.append(
-                                token.lemma_.lower() + " " + ingredient_elem_spacy[index + 1].
-                                lemma_.lower())
-                        elif not token.lemma_.lower() in self.nouns_in_ingredient:
-                            self.nouns_in_ingredient.append(token.lemma_.lower())
-                    elif token.pos_ == "VERB" and not token.lemma_.lower() in self.verbs_in_ingredient:
-                        self.verbs_in_ingredient.append(token.lemma_.lower())
-                    index += 1
+                print(str(ingredient_elem))
+                temp_nouns = self.fetch_nouns_and_initialize_verbs(ingredient_elem)
+                temp_food = {elem_index: filter_out_non_foods(temp_nouns)}
+                self.foods_in_ingredient.append(temp_food)
+                elem_index += 1
+
         print("VERBS: " + str(self.verbs_in_ingredient))
-        print("NOUNS: " + str(self.nouns_in_ingredient))
+        print("NOUNS: " + str(self.foods_in_ingredient))
 
     def parse_recipe(self, recipe):
         dictionary = string_to_dictionary(recipe[db.RecipeI.PREPARATION])
@@ -227,38 +248,29 @@ class FindImpliedTools:
         i = 0
         self.subjects_in_step[num_sentences] = []
         while i < len(sentence):
+            token = sentence[i]
+            token_text = token.lemma_.lower()
             # print("[find_verbs_and_nouns_in_sentence]" + str(sentence[i].lemma_.lower()))
-            if (sentence[i].pos_ == "VERB" or sentence[i].pos_ == "PRON"
-                    and not sentence[i].lemma_.lower() in self.verbs_in_step):
-                self.verbs_in_step.append(sentence[i].lemma_.lower())
-            if sentence[i].pos_ == "NOUN":
-                if (sentence[i].dep_ == "compound"
-                        and not str(sentence[i].lemma_.lower() + " " + sentence[
-                            i + 1].lemma_.lower()) in self.subjects_in_step):
+            if token.pos_ == "VERB" or token.pos_ == "PRON" and token_text not in self.verbs_in_step:
+                self.verbs_in_step.append(token_text)
+            if token.pos_ == "NOUN":
+                compound_noun = str(token_text + " " + sentence[i + 1].lemma_.lower())
+                if token.dep_ == "compound" and compound_noun not in self.subjects_in_step:
                     self.subjects_in_step[num_sentences].append(
-                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+                        token_text + " " + sentence[i + 1].lemma_.lower())
                     self.subjects_in_step[num_sentences].append(sentence[i + 1].lemma_.lower())
                     i += 1
-                elif (sentence[i].dep_ == "nsubj"
-                      or sentence[i].dep_ == "dobj"
-                      or sentence[i].dep_ == "pobj"
-                      or sentence[i].dep_ == "conj"
-                      and not sentence[i].lemma_.lower() in self.subjects_in_step):
-                    self.subjects_in_step[num_sentences].append(sentence[i].lemma_.lower())
-            elif (sentence[i].lemma_.lower() == "small"
-                  or sentence[i].lemma_.lower() == "medium"
-                  or sentence[i].lemma_.lower() == "large"):
+                elif token_text not in self.subjects_in_step:
+                    self.subjects_in_step[num_sentences].append(token_text)
+            elif token_text == "small" or token_text == "medium" or token_text == "large":
                 if i + 1 < len(sentence) - 1 and "bowl" in sentence[i + 1].text.lower():
-                    self.subjects_in_step[num_sentences].append(
-                        sentence[i].lemma_.lower() + " " + sentence[i + 1].lemma_.lower())
+                    self.subjects_in_step[num_sentences].append(token_text + " " + sentence[i + 1].lemma_.lower())
                     i += 1
                 elif i + 2 < len(sentence) - 1 and "bowl" in sentence[i + 2].text.lower():
-                    self.subjects_in_step[num_sentences].append(
-                        sentence[i].lemma_.lower() + " " + sentence[i + 2].lemma_.lower())
+                    self.subjects_in_step[num_sentences].append(token_text + " " + sentence[i + 2].lemma_.lower())
                     i += 2
                 elif i + 3 < len(sentence) - 1 and "bowl" in sentence[i + 3].text.lower():
-                    self.subjects_in_step[num_sentences].append(
-                        sentence[i].lemma_.lower() + " " + sentence[i + 3].lemma_.lower())
+                    self.subjects_in_step[num_sentences].append(token_text + " " + sentence[i + 3].lemma_.lower())
                     i += 3
             i += 1
 
@@ -380,9 +392,9 @@ class FindImpliedTools:
             return not match_definition_to_ingredient(tool, db.ToolI.NOT_SIZE, self.verbs_in_ingredient)
         elif definition == "ingredient":
             print("[is_tool_suitable] ingredient")
-            return match_definition_to_ingredient(tool, db.ToolI.INGREDIENT, self.nouns_in_ingredient)
+            return match_definition_to_ingredient(tool, db.ToolI.INGREDIENT, self.foods_in_ingredient)
         elif definition == "not_ingredient":
             print("[is_tool_suitable] not_ingredient")
-            return not match_definition_to_ingredient(tool, db.ToolI.NOT_INGREDIENT, self.nouns_in_ingredient)
+            return not match_definition_to_ingredient(tool, db.ToolI.NOT_INGREDIENT, self.foods_in_ingredient)
         print("[is_tool_suitable] nothing matched so returning FALSE")
         return False
