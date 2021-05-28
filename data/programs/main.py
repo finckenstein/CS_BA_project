@@ -9,7 +9,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('../database_qu
 import database_query as db
 
 if __name__ == '__main__':
-    # KitchenwareToDB()
+    KitchenwareToDB()
     ToolsToDB()
     # RecipesToDB()
     # extract_words_and_occurrence_of_ingredients("NOUN", db.RecipeI.INGREDIENTS,

@@ -11,3 +11,4 @@ if __name__ == '__main__':
     edges = obj['edges']
     for elem in edges:
         print(str(elem['@id'])
+
