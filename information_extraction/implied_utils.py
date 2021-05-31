@@ -39,7 +39,7 @@ class FindImpliedTools:
         all_data = []
         self.tools = []
         self.edited_recipe = ""
-        recipe_rows = db.sql_fetch_recipe_db("URL=='https://tasty.co/recipe/pizza-margherita'",
+        recipe_rows = db.sql_fetch_recipe_db("URL=='https://tasty.co/recipe/oven-baked-bbq-baby-back-ribs'",
                                              "../")
         for recipe in recipe_rows:
             self.parse_ingredients(recipe[db.RecipeI.INGREDIENTS])
@@ -93,8 +93,8 @@ class FindImpliedTools:
             token_index += 1
 
         foods = filter_out_non_foods(temp_nouns)
-        for food in foods:
-            self.foods_in_ingredient.append({food: states})
+        for key in foods:
+            self.foods_in_ingredient.append({key: states})
 
     def parse_recipe(self, recipe):
         dictionary = string_to_dictionary(recipe[db.RecipeI.PREPARATION])
@@ -316,30 +316,30 @@ class FindImpliedTools:
                 return False
         return True
 
-    def is_tool_suitable(self, tool, definition, entire_recipe, sentence_in_step):
+    def is_tool_suitable(self, tool, definition, entire_recipe, sentence_key):
         definition = definition.strip()
         print("[is_tool_suitable] tool: " + str(tool[db.ToolI.TOOL]) + ", checking the following: " + str(definition))
         if definition == "title":
             return check_title(tool[db.ToolI.TITLE].split(" | "), entire_recipe[db.RecipeI.TITLE].lower())
         elif definition == "isa":
-            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, -1, False)
+            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, -1, False, self.foods_in_ingredient)
         elif definition == "not_isa":
-            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, -1, True)
+            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, -1, True, self.foods_in_ingredient)
         elif definition == "isa s":
-            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, sentence_in_step, False)
+            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, sentence_key, False, self.foods_in_ingredient)
         elif definition == "not_isa s":
-            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, sentence_in_step, True)
+            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, sentence_key, True, self.foods_in_ingredient)
         elif definition == "subject":
             return match_definition_to_recipe(tool, db.ToolI.SUBJECT, self.subjects_in_step, False)
         elif definition == "not_subject":
-            return not match_definition_to_recipe(tool, db.ToolI.NOT_SUBJECT, self.subjects_in_step, True)
-        elif definition == "size":
-            return match_definition_to_ingredient(tool, db.ToolI.SIZE, self.foods_in_ingredient, False)
-        elif definition == "not_size":
-            return not match_definition_to_ingredient(tool, db.ToolI.NOT_SIZE, self.foods_in_ingredient, True)
+            return match_definition_to_recipe(tool, db.ToolI.NOT_SUBJECT, self.subjects_in_step, True)
         elif definition == "ingredient":
             return match_definition_to_ingredient(tool, db.ToolI.INGREDIENT, self.foods_in_ingredient, False)
         elif definition == "not_ingredient":
             return match_definition_to_ingredient(tool, db.ToolI.NOT_INGREDIENT, self.foods_in_ingredient, True)
         else:
             return False
+#         elif definition == "size":
+#             return match_definition_to_ingredient(tool, db.ToolI.SIZE, self.foods_in_ingredient, False)
+#         elif definition == "not_size":
+#             return match_definition_to_ingredient(tool, db.ToolI.NOT_SIZE, self.foods_in_ingredient, True)

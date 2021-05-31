@@ -1,5 +1,9 @@
 import ast
 import csv
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('database_query'))))
+import database_query as db
 
 
 def string_to_dictionary(prep_str):
@@ -24,108 +28,180 @@ def check_title(tool_title_list, recipe_title):
     return False
 
 
-def find_rel_list_in_dic_within_dic(foods, key):
-    temp_rel = []
-    for food_key in foods[key]:
-        for elem in foods[key][food_key]:
-            temp_rel.append(elem)
-    return temp_rel
-
-
 def fetch_relations_for_subjects(foods, key):
-    isa_rel = []
+    isa_rel = {}
     if key == -1:
         for sentence_key in foods:
-            isa_rel += find_rel_list_in_dic_within_dic(foods, sentence_key)
+            for food_key in foods[sentence_key]:
+                isa_rel[food_key] = foods[sentence_key][food_key]
     else:
-        isa_rel = find_rel_list_in_dic_within_dic(foods, key)
-
-    for rel in isa_rel:
-        print(rel)
-
+        for food_key in foods[key]:
+            isa_rel[food_key] = foods[key][food_key]
     return isa_rel
 
 
 def match_concept_to_edge(concept, subject_isa_rel):
-    for relation in subject_isa_rel:
-        if str(concept) in relation:
-            print("[match_concept_to_edge] return True because " + str(concept) + " in " + relation)
-            return True
+    for key in subject_isa_rel:
+        for relation in subject_isa_rel[key]:
+            if str(concept) in relation:
+                print("[match_concept_to_edge] return True because " + str(concept) + " in " + relation)
+                return key
     print("[match_concept_to_edge] return False")
+    return None
+
+
+def list_to_dic(ingredients):
+    tmp = {}
+    for elem in ingredients:
+        for key in elem:
+            tmp[key] = elem[key]
+    return tmp
+
+
+def match_ingredient_to_tools_keyword(tool, ingredients, food, key_val, index):
+    keywords_from_tool = string_to_dictionary(tool[index])
+    ingredient_dic = list_to_dic(ingredients)
+    keywords_from_ingredient = ingredient_dic.get(food)
+
+    print("[match_ingredient_to_tools_keyword]")
+    print(keywords_from_tool)
+    print(ingredients)
+    print(keywords_from_ingredient)
+
+    if keywords_from_ingredient is None:
+        return True
+    for key in keywords_from_tool:
+        if key == key_val:
+            for t_keyword_list in keywords_from_tool[key]:
+                for t_keyword in t_keyword_list:
+                    for i_keyword in keywords_from_ingredient:
+                        if t_keyword in i_keyword:
+                            print("RETURN TRUE BECAUSE " + t_keyword, " in " + i_keyword)
+                            return True
+    print("RETURN FALSE")
     return False
 
 
-def match_definition_to_relations(tool, index, foods_dic, possible_key, negation):
-    print(foods_dic)
-    isa_rel_list = fetch_relations_for_subjects(foods_dic, possible_key)
+def size_matches(food, index, ingredients, tool):
+    print("[size_matches] received food: ", food)
+    if index == db.ToolI.ISA:
+        if tool[db.ToolI.NOT_SIZE] is None:
+            return True
+        else:
+            return match_ingredient_to_tools_keyword(tool, ingredients, food, "isa", db.ToolI.NOT_SIZE)
+    elif index == db.ToolI.NOT_ISA:
+        if tool[db.ToolI.SIZE] is None:
+            return False
+        else:
+            return match_ingredient_to_tools_keyword(tool, ingredients, food, "not_isa", db.ToolI.SIZE)
 
+
+def match_definition_to_relations(tool, index, foods_dic, possible_key, negation, ingredients):
+    isa_rel_dic = fetch_relations_for_subjects(foods_dic, possible_key)
     for target_concept in tool[index].split(" | "):
         print("Match current target concept: " + str(target_concept))
         if " & " in target_concept:
-            all_true = True
-            for conj_target_concept in target_concept.split(" & "):
+            counter = 0
+            conj_list = target_concept.split(" & ")
+            for conj_target_concept in conj_list:
                 print("In conjunction. Checking target concept: " + str(conj_target_concept))
-                concept_matches = match_concept_to_edge(conj_target_concept, isa_rel_list)
-                if (not concept_matches and not negation) or (concept_matches and negation):
-                    print("CONJUNCTION: BREAK OUT OF LOOP")
-                    all_true = False
-                    break
-            if all_true:
+                concept = match_concept_to_edge(conj_target_concept, isa_rel_dic)
+                if ((concept and not negation and size_matches(concept, index, ingredients, tool))
+                        or (not concept and negation)):
+                    print("CONJUNCTION: increment counter")
+                    counter += 1
+                elif concept and negation and size_matches(concept, index, ingredients, tool):
+                    counter += 1
+            if counter == len(conj_list):
                 print("CONJUNCTION RETURN TRUE")
                 return True
+            elif negation:
+                return False
         else:
-            concept_matches = match_concept_to_edge(target_concept, isa_rel_list)
-            if (not concept_matches and negation) or (concept_matches and not negation):
-                print("[match_definition_to_concept_net] IN ELSE RETURNING TRUE")
+            concept = match_concept_to_edge(target_concept, isa_rel_dic)
+            if concept and not negation and size_matches(concept, index, ingredients, tool):
+                print("[match_definition_to_concept_net] IN ELSE WITHOUT NEGATION. RETURNING True")
                 return True
-    print("[match_definition_to_concept_net] AT THE END. RETURNING FALSE")
-    return False
+            elif concept and negation and not size_matches(concept, index, ingredients, tool):
+                print("[match_definition_to_concept_net] IN ELSE WITH NEGATION. RETURNING False")
+                return False
+    print("[match_definition_to_concept_net] AT THE END. RETURNING: " + str(negation))
+    return negation
+
+
+def dic_items_to_list(dic):
+    temp_list = []
+    for key in dic:
+        for elem in dic[key]:
+            temp_list.append(elem)
+    return temp_list
 
 
 def match_definition_to_recipe(tool, index, subjects_in_step, negation):
+    subject_list = dic_items_to_list(subjects_in_step)
+    print("[match_definition_to_recipe] START: ", subject_list)
+
     for subject in tool[index].split(" | "):
         if " & " in subject:
             counter = 0
-            conj_concept_list = subject.split(" & ")
-            for conj_subject in conj_concept_list:
-                for key in subjects_in_step:
-                    for subject_target in subjects_in_step[key]:
-                        if subject_target == conj_subject:
-                            counter += 1
-            if counter == len(conj_concept_list):
-                print("[match_definition_to_recipe] RETURN TRUE because counter equals conjunction def")
+            conj_list = subject.split(" & ")
+            for conj_subject in conj_list:
+                if (conj_subject in subject_list and not negation) or (conj_subject not in subject_list and negation):
+                    print("increment counter")
+                    counter += 1
+            if counter == len(conj_list):
+                print("[match_definition_to_recipe] in conjunction. RETURN TRUE.")
                 return True
+            elif negation:
+                return False
         else:
-            for key in subjects_in_step:
-                for subject_target in subjects_in_step[key]:
-                    if subject_target == subject:
-                        print("[match_definition_to_recipe] RETURN TRUE")
-                        return True
-    print("[match_definition_to_recipe] RETURN FALSE BECAUSE " + str(tool[index].split(" | ")) + " NOT IN " + str(
-        subjects_in_step))
-    return False
+            print("disjunction. current subject: ", subject)
+            if subject in subject_list and not negation:
+                print("[match_definition_to_recipe] in disjunction not negation. RETURN TRUE")
+                return True
+            elif subject in subject_list and negation:
+                print("[match_definition_to_recipe] in disjunction negation. RETURN FALSE")
+                return False
+
+    print("[match_definition_to_recipe] AT THE END. RETURNING: " + str(negation))
+    return negation
 
 
-def match_definition_to_ingredient(tool, index, ingredient_list, negation):
+def fetch_keys_from_dic(dic):
+    tmp = []
+    for elem in dic:
+        for key in elem:
+            tmp.append(key)
+    return tmp
+
+
+def match_definition_to_ingredient(tool, index, ingredient_dic, negation):
+    ingredient_list = fetch_keys_from_dic(ingredient_dic)
     print("[match_definition_to_ingredient] ingredient list: " + str(ingredient_list))
     for keyword in tool[index].split(" | "):
         print("keyword from tool " + str(keyword))
         if " & " in keyword:
-            all_true = True
-            for conj_keyword in keyword.split(" & "):
-                if ((conj_keyword not in ingredient_list and not negation)
-                        or (conj_keyword in ingredient_list and negation)):
-                    print("break out of loop because" + str(conj_keyword) + " is or is not in " + str(ingredient_list))
-                    all_true = False
-                    break
-            if all_true:
-                print("[match_definition_to_ingredient] in conjunction. All_true so returning True.")
+            counter = 0
+            conj_list = keyword.split(" & ")
+            for conj_keyword in conj_list:
+                if ((conj_keyword in ingredient_list and not negation)
+                        or (conj_keyword not in ingredient_list and negation)):
+                    print("increment counter")
+                    counter += 1
+            if counter == len(conj_list):
+                print("[match_definition_to_ingredient] in conjunction. counter equal len so returning True.")
                 return True
-        elif (keyword not in ingredient_list and negation) or (keyword in ingredient_list and not negation):
-            print("[match_definition_to_ingredient] in disjunction. RETURN TRUE")
-            return True
-    print("[match_definition_to_ingredient] AT THE END. RETURN FALSE")
-    return False
+            elif negation:
+                return False
+        else:
+            if keyword in ingredient_list and not negation:
+                print("[match_definition_to_ingredient] in disjunction without negation. RETURN TRUE")
+                return True
+            elif keyword in ingredient_list and negation:
+                print("[match_definition_to_ingredient] in disjunction with negation. RETURN FALSE")
+                return False
+    print("[match_definition_to_ingredient] AT THE END. RETURNING: " + str(negation))
+    return negation
 
 
 def is_size_bowl(sentence, offset):

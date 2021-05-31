@@ -47,5 +47,4 @@ def filter_out_non_foods(nouns):
         elif is_noun_food(noun) and noun not in real_food:
             real_food[noun] = get_edges(noun)
 
-    print("REAL FOOD: " + str(real_food))
     return real_food
