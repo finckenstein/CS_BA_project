@@ -1,0 +1,176 @@
+item {
+    id: 1
+    name: 'bowl'
+}
+item {
+    id: 2
+    name: 'pan'
+}
+item {
+    id: 3
+    name: 'pot'
+}
+item {
+    id: 4
+    name: 'pinch-bowl'
+}
+item {
+    id: 5
+    name: 'cutting-board'
+}
+item {
+    id: 6
+    name: 'plate'
+}
+item {
+    id: 7
+    name: 'baking-sheet'
+}
+item {
+    id: 8
+    name: 'silicone-spatula'
+}
+item {
+    id: 9
+    name: 'jug'
+}
+item {
+    id: 10
+    name: 'lepel'
+}
+item {
+    id: 11
+    name: 'baking-dish'
+}
+item {
+    id: 12
+    name: 'tongs'
+}
+item {
+    id: 13
+    name: 'wooden-spatula'
+}
+item {
+    id: 14
+    name: 'whisk'
+}
+item {
+    id: 15
+    name: 'blender'
+}
+item {
+    id: 16
+    name: 'spoon'
+}
+item {
+    id: 17
+    name: 'fork'
+}
+item {
+    id: 18
+    name: 'knife'
+}
+item {
+    id: 19
+    name: 'mixer'
+}
+item {
+    id: 20
+    name: 'measuring-cup'
+}
+item {
+    id: 21
+    name: 'food-container'
+}
+item {
+    id: 22
+    name: 'turner'
+}
+item {
+    id: 23
+    name: 'sieve'
+}
+item {
+    id: 24
+    name: 'peeler'
+}
+item {
+    id: 25
+    name: 'baking-form'
+}
+item {
+    id: 26
+    name: 'rolling-pin'
+}
+item {
+    id: 27
+    name: 'skimmer'
+}
+item {
+    id: 28
+    name: 'brush'
+}
+item {
+    id: 29
+    name: 'ladle'
+}
+item {
+    id: 30
+    name: 'scoop'
+}
+item {
+    id: 31
+    name: 'icing-spatula'
+}
+item {
+    id: 32
+    name: 'grater'
+}
+item {
+    id: 33
+    name: 'pepper-mill'
+}
+item {
+    id: 34
+    name: 'chopsticks'
+}
+item {
+    id: 35
+    name: 'hammer'
+}
+item {
+    id: 36
+    name: 'oil-dispenser'
+}
+item {
+    id: 37
+    name: 'squeezer'
+}
+item {
+    id: 38
+    name: 'lid'
+}
+item {
+    id: 39
+    name: 'jar'
+}
+item {
+    id: 40
+    name: 'baking-rack'
+}
+item {
+    id: 41
+    name: 'masher'
+}
+item {
+    id: 42
+    name: 'cupcake-tin'
+}
+item {
+    id: 43
+    name: 'oven-glove'
+}
+item {
+    id: 44
+    name: 'pizza-cutter'
+}

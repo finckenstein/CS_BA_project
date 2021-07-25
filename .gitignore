@@ -1,0 +1,5 @@
+**venv
+**__pycache__
+computer_vision/CV_COCO/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8
+computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B4
+computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B1

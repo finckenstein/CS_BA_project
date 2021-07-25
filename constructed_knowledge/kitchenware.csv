@@ -1,0 +1,12 @@
+Verb,Associated_Tool,Default
+cook,"pot, saucepan, pan, skillet, griddle, grill, barbecue, bbq, air fryer",skillet
+simmer,"pot, saucepan, pan, skillet, griddle",pot
+fry,"pan, skillet, grill, barbecue, bbq, air fryer, griddle",skillet
+sear,"pan, skillet, grill, barbecue, bbq, air fryer, griddle",skillet
+roast,"pan, skillet, grill, barbecue, bbq, air fryer, griddle",skillet
+bake,"baking dish, foil dish, casserole, baking sheet, sheet pan, pan, skillet, griddle",casserole
+grill,"grill, bbq, barbecue, air fryer",barbecue
+toss,"small bowl, medium bowl, large bowl, bowl, mixer",bowl
+blend,blender,blender
+mash,large bowl,large bowl
+preheat,"griddle, baking dish, foil dish, casserole, baking sheet, sheet pan, pan, skillet",griddle
