@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
+
+# Remove opencv pip uninstall python-opencv for this to display the graph
+# Internal thread error due to sharing graphics library (?)
 import os
 import sqlite3
 import ast
 from moviepy.editor import VideoFileClip
 import matplotlib.pyplot as plt
 import numpy as np
-# from database_query import sql_fetch_1to1_videos, RecipeWithVideoI
 
 
 def sql_fetch_1to1_videos():
-    recipe_conn = sqlite3.connect('/home/leander/Desktop/automatic_KB/recipes/recipes_with_1to1_video.db')
+    recipe_conn = sqlite3.connect('/home/leander/Desktop/automatic_KB/recipes/db/recipes_with_1to1_video.db')
     recipe_cursor = recipe_conn.cursor()
     recipe_cursor.execute("SELECT * FROM RecipesWith1To1Video;")
     return recipe_cursor.fetchall()
@@ -81,18 +83,10 @@ if __name__ == "__main__":
 
         word_count = fetch_number_of_words(recipe[RecipeWithVideoI.PREPARATION])
         duration = fetch_video_length(PATH_TO_VIDEOS + video_file)
-
         print("word count: ", word_count)
         print("video duration: ", duration)
-
-        if (duration > 250 and word_count < 200) or duration >= 300 or (duration > 150 and word_count < 110):
-            data.append((recipe[RecipeWithVideoI.URL], recipe[RecipeWithVideoI.VIDEO_ID], word_count, duration))
-        else:
-            number_of_words.append(int(word_count))
-            duration_of_video.append(int(duration))
-
-    for elem in data:
-        print(elem)
+        number_of_words.append(int(word_count))
+        duration_of_video.append(int(duration))
 
     m = np.polyfit(number_of_words, duration_of_video, deg=1)
     plt.plot(number_of_words, duration_of_video, '.')
@@ -104,6 +98,6 @@ if __name__ == "__main__":
 
     correlation = np.corrcoef(number_of_words, duration_of_video)
     print(correlation[0, 1])
-    # correlation coefficient 0.7325874171839973
+    # correlation coefficient 0.8262568746718546
     print(correlation[1, 0])
-    # correlation coefficient 0.7325874171839974
+    # correlation coefficient 0.8262568746718546

@@ -1,7 +1,41 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="39e8e914-0787-48db-ae83-bcf4ae7037f9" name="Default Changelist" comment="" />
+    <list default="true" id="39e8e914-0787-48db-ae83-bcf4ae7037f9" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/syncing_text_with_video.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/automatic_KB.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/automatic_KB.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_analysis/correlation.png" beforeDir="false" afterPath="$PROJECT_DIR$/data_analysis/correlation.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_analysis/correlation.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_analysis/correlation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/categorize_recipes.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/categorize_recipes.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_1to1_video_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_1to1_video_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_video_not_stored_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_video_not_stored_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_video_stored_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_with_video_stored_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_without_1to1_video_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_without_1to1_video_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/recipes_without_video_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/recipes_without_video_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_management/csv_to_db/tools_to_db.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_management/csv_to_db/tools_to_db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/database_query.py" beforeDir="false" afterPath="$PROJECT_DIR$/database_query.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/alias_functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/alias_functions.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/conceptNet_api.py" beforeDir="false" afterPath="$PROJECT_DIR$/conceptNet_api.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/extract_implied_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/extract_implied_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/sentence_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/sentence_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/information_extraction/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_1to1_video.csv" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/csv/recipes_with_1to1_video.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_1to1_video.db" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/db/recipes_with_1to1_video.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_video_not_stored.csv" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/csv/recipes_with_video_not_stored.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_video_not_stored.db" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/db/recipes_with_video_not_stored.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_video_stored.csv" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/csv/recipes_with_video_stored.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_with_video_stored.db" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/db/recipes_with_video_stored.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_without_1to1_video.csv" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/csv/recipes_without_1to1_video.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_without_1to1_video.db" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/db/recipes_without_1to1_video.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_without_video.csv" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/csv/recipes_without_video.csv" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/recipes/recipes_without_video.db" beforeDir="false" afterPath="$PROJECT_DIR$/recipes/db/recipes_without_video.db" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -19,8 +53,15 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/venv" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/recipes/csv" />
+      <recent name="$PROJECT_DIR$/recipes/db" />
+    </key>
   </component>
   <component name="RunManager" selected="Python.main (1)">
     <configuration name="categorize_recipes" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
@@ -107,7 +148,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="object_detection_tutorial" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="syncing_text_with_video" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="automatic_KB" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -115,11 +156,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/information_extraction" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/object_detection_tutorial.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/syncing_text_with_video.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -131,10 +172,10 @@
     <recent_temporary>
       <list>
         <item itemvalue="Python.main (1)" />
-        <item itemvalue="Python.correlation" />
         <item itemvalue="Python.categorize_recipes" />
+        <item itemvalue="Python.syncing_text_with_video" />
+        <item itemvalue="Python.correlation" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.object_detection_tutorial" />
       </list>
     </recent_temporary>
   </component>

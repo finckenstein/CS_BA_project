@@ -20,9 +20,9 @@ import pathlib
 import cv2
 import os
 
-from tensorflow_object_detection_utils import ops as utils_ops
-from tensorflow_object_detection_utils import label_map_util
-from tensorflow_object_detection_utils import visualization_utils as vis_util
+from computer_vision.tensorflow_object_detection_utils import ops as utils_ops
+from computer_vision.tensorflow_object_detection_utils import label_map_util
+from computer_vision.tensorflow_object_detection_utils import visualization_utils as vis_util
 
 
 def load_model(model_path):
@@ -68,61 +68,69 @@ def run_inference_for_single_image(model, image):
     return output_dict
 
 
-def make_inference(capture, model, frame_rate):
+def make_inference(category_index, capture, model, frame_rate):
     frame_id = capture.get(1)  # current frame number
     ret, image_np = capture.read()
     if not ret:
+        print("\n[make_inference] returning FALSE\n")
         return False
 
     if frame_id % math.floor(frame_rate) == 0:
-        # Actual detection.
-        output_dict = run_inference_for_single_image(model, image_np)
-        # Visualization of the results of a detection.
-        vis_util.visualize_boxes_and_labels_on_image_array(
-            image_np,
-            output_dict['detection_boxes'],
-            output_dict['detection_classes'],
-            output_dict['detection_scores'],
-            category_index,
-            instance_masks=output_dict.get('detection_masks_reframed', None),
-            use_normalized_coordinates=True,
-            line_thickness=8,
-            min_score_thresh=0.30)
+        return False
 
-        cv2.imshow('object_detection', cv2.resize(image_np, (640, 640)))
+    # Actual detection.
+    output_dict = run_inference_for_single_image(model, image_np)
+    # Visualization of the results of a detection.
+    vis_util.visualize_boxes_and_labels_on_image_array(
+        image_np,
+        output_dict['detection_boxes'],
+        output_dict['detection_classes'],
+        output_dict['detection_scores'],
+        category_index,
+        instance_masks=output_dict.get('detection_masks_reframed', None),
+        use_normalized_coordinates=True,
+        line_thickness=8,
+        min_score_thresh=0.40)
 
-        while True:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                cv2.destroyAllWindows()
-                break
+    cv2.imshow('object_detection', cv2.resize(image_np, (640, 640)))
+
+    while True:
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            break
+    print("\n[make_inference] returning TRUE\n")
     return True
 
 
-if __name__ == '__main__':
+def iterate_over_video(path_to_video, seconds_into_video):
     utils_ops.tf = tf.compat.v1
     tf.gfile = tf.io.gfile
 
-    PATH_TO_LABELS = 'CV_Kitchen_Tools/kitchen_tools_label_map.pbtxt'
+    PATH_TO_LABELS = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/kitchen_tools_label_map.pbtxt'
     category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
 
-    model_name = 'CV_Kitchen_Tools/CV_kitchen_tools_detection_model/'
+    model_name = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B4/'
     detection_model = load_model(model_name)
 
-    print("\n\n\nHELLO: ", detection_model.signatures['serving_default'].inputs, "\n")
+    # print("\n\n\nHELLO: ", detection_model.signatures['serving_default'].inputs, "\n")
 
-    PATH_TO_USB_VIDEOS = "../../../../../../media/leander/1F1C-606E/videos/"
-    files = os.listdir(PATH_TO_USB_VIDEOS)
-    i = 0
+    cap = cv2.VideoCapture(path_to_video)
+    frame_rate = cap.get(5)
+    sec_counter = 0
 
-    for file in files:
-        if '.mp4' in file and i < 1:
-            cap = cv2.VideoCapture(PATH_TO_USB_VIDEOS + file)
-            frame_rate = cap.get(5)
+    while cap.isOpened():
+        frame_id = cap.get(1)  # current frame number
+        ret, image_np = cap.read()
+        if not ret:
+            print("\n[make_inference] returning FALSE\n")
+            return False
 
-            while cap.isOpened():
-                if not make_inference(cap, detection_model, frame_rate):
-                    break
+        if frame_id % math.floor(frame_rate) == 0:
+            sec_counter += 1
+        elif sec_counter >= seconds_into_video:
+            if not make_inference(category_index, cap, detection_model, frame_rate):
+                break
 
-            cap.release()
-            cv2.destroyAllWindows()
-            i += 1
+    print("\nCAP RELEASED AND DESTROYED\n")
+    cap.release()
+    cv2.destroyAllWindows()

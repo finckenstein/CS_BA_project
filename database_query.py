@@ -2,10 +2,13 @@
 import sqlite3
 
 
-def sql_fetch_1to1_videos():
-    recipe_conn = sqlite3.connect('/home/leander/Desktop/automatic_KB/recipes/recipes_with_1to1_video.db')
+def sql_fetch_1to1_videos(url):
+    recipe_conn = sqlite3.connect('/home/leander/Desktop/automatic_KB/recipes/db/recipes_with_1to1_video.db')
     recipe_cursor = recipe_conn.cursor()
-    recipe_cursor.execute("SELECT * FROM RecipesWith1To1Video;")
+    if url == "all":
+        recipe_cursor.execute("SELECT * FROM RecipesWith1To1Video;")
+    else:
+        recipe_cursor.execute("SELECT * FROM RecipesWith1To1Video WHERE URL = '" + url + "';")
     return recipe_cursor.fetchall()
 
 
@@ -29,15 +32,15 @@ def sql_fetch_recipes_with_video(url):
     return recipe_cursor.fetchall()
 
 
-def sql_fetch_tools_db(path):
-    utils_connection = sqlite3.connect(path+'data/constructed_knowledge/tools.db')
+def sql_fetch_tools_db():
+    utils_connection = sqlite3.connect('/home/leander/Desktop/automatic_KB/constructed_knowledge/tools.db')
     utils_cursor = utils_connection.cursor()
     utils_cursor.execute("SELECT * FROM Tools;")
     return utils_cursor.fetchall()
 
 
-def sql_fetch_kitchenware_db(path):
-    utils_connection = sqlite3.connect(path+'data/constructed_knowledge/kitchenware.db')
+def sql_fetch_kitchenware_db():
+    utils_connection = sqlite3.connect('/home/leander/Desktop/automatic_KB/constructed_knowledge/kitchenware.db')
     utils_cursor = utils_connection.cursor()
     utils_cursor.execute("SELECT * FROM Kitchenware;")
     return utils_cursor.fetchall()
@@ -73,12 +76,6 @@ class RecipeI:
     NUTRITION = 8
 
 
-class KitchenwareI:
-    VERB = 0
-    KITCHENWARE = 1
-    DEFAULT = 2
-
-
 class RecipeWithVideoI:
     URL = 0
     TITLE = 1
@@ -90,3 +87,9 @@ class RecipeWithVideoI:
     PREPARATION = 7
     NUTRITION = 8
     VIDEO_ID = 9
+
+
+class KitchenwareI:
+    VERB = 0
+    KITCHENWARE = 1
+    DEFAULT = 2

@@ -5,7 +5,7 @@ import pandas as pd
 
 class RecipesToDB:
     def __init__(self):
-        conn = sqlite3.connect('home/leander/Desktop/automatic_KB/raw_data/raw_recipes/recipes1.db')
+        conn = sqlite3.connect('/home/leander/Desktop/automatic_KB/recipes/old_recipes/recipes1.db')
         c = conn.cursor()
         c.execute("CREATE TABLE IF NOT EXISTS Recipes ("
                   "URL text Unique Primary Key, "

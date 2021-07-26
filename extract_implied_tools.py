@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import spacy
-import os
 import sys
 
 from conceptNet_api import filter_out_non_foods
@@ -14,7 +13,7 @@ from alias_functions import is_size_bowl
 from alias_functions import is_verb_or_pronoun
 from alias_functions import is_small_medium_or_large
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath('database_query'))))
+sys.path.append('/home/leander/Desktop/database_query')
 import database_query as db
 
 
@@ -22,13 +21,13 @@ class FindImpliedTools:
     def __init__(self):
         self.nlp = spacy.load('en_core_web_trf')
 
-        self.entire_kitchenware_kb = db.sql_fetch_kitchenware_db("../")
+        self.entire_kitchenware_kb = db.sql_fetch_kitchenware_db()
         self.cur_kitchenware = None
         self.kitchenware = []
         self.initialize_kitchenware_array()
         print(self.kitchenware)
 
-        self.entire_tool_kb = db.sql_fetch_tools_db("../")
+        self.entire_tool_kb = db.sql_fetch_tools_db()
         self.verbs_in_step = []
         self.subjects_in_step = {}
         self.foods_in_step = {}
@@ -38,8 +37,7 @@ class FindImpliedTools:
         all_data = []
         self.tools = []
         self.edited_recipe = ""
-        recipe_rows = db.sql_fetch_recipe_db("URL=='https://tasty.co/recipe/easy-homemade-potato-gnocchi'",
-                                             "../")
+        recipe_rows = db.sql_fetch_1to1_videos("https://tasty.co/recipe/cashew-chicken-stir-fry")
         for recipe in recipe_rows:
             self.parse_ingredients(recipe[db.RecipeI.INGREDIENTS])
             self.parse_recipe(recipe)

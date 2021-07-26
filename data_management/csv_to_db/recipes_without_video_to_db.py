@@ -5,8 +5,8 @@ import pandas as pd
 
 class RecipesWithoutVideoToDB:
     def __init__(self):
-        PATH_TO_DB = '/home/leander/Desktop/automatic_KB/recipes/recipes_without_video.db'
-        PATH_TO_CSV = '/home/leander/Desktop/automatic_KB/recipes/recipes_without_video.csv'
+        PATH_TO_DB = '/home/leander/Desktop/automatic_KB/recipes/db/recipes_without_video.db'
+        PATH_TO_CSV = '/home/leander/Desktop/automatic_KB/recipes/csv/recipes_without_video.csv'
         DB_NAME = "RecipesWithoutVideo"
         conn = sqlite3.connect(PATH_TO_DB)
         c = conn.cursor()
