@@ -13,6 +13,8 @@ from alias_functions import is_size_bowl
 from alias_functions import is_verb_or_pronoun
 from alias_functions import is_small_medium_or_large
 
+from sync import SyncingTextWithVideo
+
 sys.path.append('/home/leander/Desktop/database_query')
 import database_query as db
 
@@ -34,11 +36,14 @@ class FindImpliedTools:
 
         self.foods_in_ingredient = []
 
+        self.sync = SyncingTextWithVideo()
+
         all_data = []
         self.tools = []
         self.edited_recipe = ""
         recipe_rows = db.sql_fetch_1to1_videos("https://tasty.co/recipe/cashew-chicken-stir-fry")
         for recipe in recipe_rows:
+            self.sync.update_recipe_change(recipe)
             self.parse_ingredients(recipe[db.RecipeI.INGREDIENTS])
             self.parse_recipe(recipe)
 
@@ -79,7 +84,7 @@ class FindImpliedTools:
         while token_index < len(elem_spacy):
             token = elem_spacy[token_index]
             token_text = token.lemma_.lower()
-            if token.dep_ == "compound" and elem_spacy[token_index+1].pos_ == "NOUN":
+            if token.dep_ == "compound" and elem_spacy[token_index + 1].pos_ == "NOUN":
                 compound_noun = str(token_text + " " + elem_spacy[token_index + 1].lemma_.lower())
                 if compound_noun not in temp_nouns:
                     temp_nouns.append(compound_noun)
@@ -140,6 +145,12 @@ class FindImpliedTools:
                 self.find_tool_that_corresponds_to_verb(recipe, token_text, num_sentence)
 
             index = self.check_explicit_change_in_kitchenware(token, token_text, sentence, index)
+
+            cv_kitchenware = self.sync.get_cv_detected_kitchenware()
+            if cv_kitchenware == None:
+                print("\n\nWords_per_frame is not == counter")
+            else:
+                print("\n\n\n\nCV DETECTED KITCHENWARE: ", cv_kitchenware)
 
     def check_explicit_change_in_kitchenware(self, token, token_text, sentence, index):
         if token.pos_ == "NOUN":
@@ -207,7 +218,7 @@ class FindImpliedTools:
 
         if is_verb_or_pronoun(token) and token_text not in self.verbs_in_step:
             self.verbs_in_step.append(token_text)
-        elif token.dep_ == "compound" and sentence[i+1].pos_ == "NOUN":
+        elif token.dep_ == "compound" and sentence[i + 1].pos_ == "NOUN":
             compound_noun = str(token_text + " " + sentence[i + 1].lemma_.lower())
             if compound_noun not in self.subjects_in_step[num_sentences]:
                 self.subjects_in_step[num_sentences].append(compound_noun)
@@ -319,13 +330,17 @@ class FindImpliedTools:
         if definition == "title":
             return check_title(tool[db.ToolI.TITLE].split(" | "), entire_recipe[db.RecipeI.TITLE].lower())
         elif definition == "isa":
-            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, -1, False, self.foods_in_ingredient)
+            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, -1, False,
+                                                 self.foods_in_ingredient)
         elif definition == "not_isa":
-            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, -1, True, self.foods_in_ingredient)
+            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, -1, True,
+                                                 self.foods_in_ingredient)
         elif definition == "isa s":
-            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, sentence_key, False, self.foods_in_ingredient)
+            return match_definition_to_relations(tool, db.ToolI.ISA, self.foods_in_step, sentence_key, False,
+                                                 self.foods_in_ingredient)
         elif definition == "not_isa s":
-            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, sentence_key, True, self.foods_in_ingredient)
+            return match_definition_to_relations(tool, db.ToolI.NOT_ISA, self.foods_in_step, sentence_key, True,
+                                                 self.foods_in_ingredient)
         elif definition == "subject":
             return match_definition_to_recipe(tool, db.ToolI.SUBJECT, self.subjects_in_step, False)
         elif definition == "not_subject":

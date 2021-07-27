@@ -95,14 +95,9 @@ def select_detected_kitchenware(kitchenware_detected):
         percentage_str = obj_array[1]
         score = int(percentage_str[:-1])
 
-        print(obj_array, type(obj_array))
-        print(percentage_str, type(percentage_str))
-        print(score, type(score))
-        print(max_value[0], max_value[1], type(max_value[1]))
-
         if max_value[1] < score:
             max_value = (obj_array[0], score)
-    print("[select_detected_kitchenware] return: ", max_value[0])
+    print("[select_detected_kitchenware] return: ", max_value[0], " with probability: ", max_value[1])
     return max_value[0]
 
 
