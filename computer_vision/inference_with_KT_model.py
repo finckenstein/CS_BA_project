@@ -68,20 +68,11 @@ def run_inference_for_single_image(model, image):
     return output_dict
 
 
-def make_inference(category_index, capture, model, frame_rate):
-    frame_id = capture.get(1)  # current frame number
-    ret, image_np = capture.read()
-    if not ret:
-        print("\n[make_inference] returning FALSE\n")
-        return False
-
-    if frame_id % math.floor(frame_rate) == 0:
-        return False
-
+def make_inference(category_index, image_np, model):
     # Actual detection.
     output_dict = run_inference_for_single_image(model, image_np)
     # Visualization of the results of a detection.
-    vis_util.visualize_boxes_and_labels_on_image_array(
+    return vis_util.visualize_boxes_and_labels_on_image_array(
         image_np,
         output_dict['detection_boxes'],
         output_dict['detection_classes'],
@@ -90,19 +81,33 @@ def make_inference(category_index, capture, model, frame_rate):
         instance_masks=output_dict.get('detection_masks_reframed', None),
         use_normalized_coordinates=True,
         line_thickness=8,
-        min_score_thresh=0.40)
-
-    cv2.imshow('object_detection', cv2.resize(image_np, (640, 640)))
-
-    while True:
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
-            break
-    print("\n[make_inference] returning TRUE\n")
-    return True
+        min_score_thresh=0.2)
 
 
-def iterate_over_video(path_to_video, seconds_into_video):
+def select_detected_kitchenware(kitchenware_detected):
+    print(kitchenware_detected)
+    if not kitchenware_detected:
+        print("[select_detected_kitchenware] return []")
+        return []
+    max_value = (None, 0)
+    for object in kitchenware_detected:
+        obj_array = object.split(": ")
+        percentage_str = obj_array[1]
+        score = int(percentage_str[:-1])
+
+        print(obj_array, type(obj_array))
+        print(percentage_str, type(percentage_str))
+        print(score, type(score))
+        print(max_value[0], max_value[1], type(max_value[1]))
+
+        if max_value[1] < score:
+            max_value = (obj_array[0], score)
+    print("[select_detected_kitchenware] return: ", max_value[0])
+    return max_value[0]
+
+
+# ASSUMPTION: the function will only ever make a inference for one second
+def iterate_over_video(path_to_video, timestamp):
     utils_ops.tf = tf.compat.v1
     tf.gfile = tf.io.gfile
 
@@ -112,25 +117,29 @@ def iterate_over_video(path_to_video, seconds_into_video):
     model_name = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B4/'
     detection_model = load_model(model_name)
 
-    # print("\n\n\nHELLO: ", detection_model.signatures['serving_default'].inputs, "\n")
-
     cap = cv2.VideoCapture(path_to_video)
-    frame_rate = cap.get(5)
-    sec_counter = 0
+    cap.set(cv2.CAP_PROP_POS_MSEC, timestamp*1000)
 
     while cap.isOpened():
-        frame_id = cap.get(1)  # current frame number
         ret, image_np = cap.read()
         if not ret:
             print("\n[make_inference] returning FALSE\n")
             return False
 
-        if frame_id % math.floor(frame_rate) == 0:
-            sec_counter += 1
-        elif sec_counter >= seconds_into_video:
-            if not make_inference(category_index, cap, detection_model, frame_rate):
+        kitchenware_detected = make_inference(category_index, image_np, detection_model)
+        most_probable_kitchenware = select_detected_kitchenware(kitchenware_detected)
+        print("[iterate_over_video] most probable kitchenware detected: ", most_probable_kitchenware)
+
+        cv2.imshow('object_detection', cv2.resize(image_np, (640, 640)))
+
+        while True:
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                cv2.destroyAllWindows()
                 break
+        break
 
     print("\nCAP RELEASED AND DESTROYED\n")
     cap.release()
     cv2.destroyAllWindows()
+    return most_probable_kitchenware
+

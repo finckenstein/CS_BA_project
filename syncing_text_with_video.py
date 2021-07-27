@@ -27,7 +27,7 @@ video_duration = 0
 words_per_second = 0
 word_remainder = 0
 count_counter_switches = 0
-seconds_into_video = 0
+video_timestamp = 0
 
 
 def initialize_kitchenware_array():
@@ -127,7 +127,7 @@ def check_explicit_change_in_kitchenware(token, token_text, sentence, index):
 
 
 def analyse_recipe_sentence(sentence, num_sentence):
-    global cur_kitchenware, word_remainder, count_counter_switches, seconds_into_video
+    global cur_kitchenware, word_remainder, count_counter_switches, video_timestamp
     find_kitchenware(num_sentence)
     print("[parse_preparation] current kitchenware: " + str(cur_kitchenware))
     counter = 0
@@ -151,18 +151,22 @@ def analyse_recipe_sentence(sentence, num_sentence):
             word_remainder += words_per_second - counter
             counter = 0
             count_counter_switches += 1
-            video_detected_kitchenware = iterate_over_video(PATH_TO_VIDEOS + video_file, seconds_into_video)
-            seconds_into_video += int(words_per_second)
-        #     TODO: Watch int(words_per_second) seconds of video
+
+            video_detected_kitchenware = iterate_over_video(PATH_TO_VIDEOS + video_file, video_timestamp)
+            print(video_detected_kitchenware)
+            video_timestamp += int(words_per_second)
+
         elif word_remainder >= 1:
             word_remainder -= 1
-            seconds_into_video += 1
-        #     TODO: Watch 1 seconds of video
 
+            video_detected_kitchenware = iterate_over_video(PATH_TO_VIDEOS + video_file, video_timestamp)
+            print("\n\n\n[analysis_recipe_sentence] detected_kitchenware: ", video_detected_kitchenware)
+            video_timestamp += 1
 
         print("word_remainder: ", word_remainder)
         print("counter: ", counter)
         print("words_per_seconds: ", words_per_second)
+        print("video_timestamp", video_timestamp)
 
 
 def parse_recipe(recipe):
