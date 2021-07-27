@@ -15,20 +15,10 @@ import math
 
 import numpy as np
 import tensorflow as tf
-
-import pathlib
 import cv2
-import os
 
 from computer_vision.tensorflow_object_detection_utils import ops as utils_ops
-from computer_vision.tensorflow_object_detection_utils import label_map_util
 from computer_vision.tensorflow_object_detection_utils import visualization_utils as vis_util
-
-
-def load_model(model_path):
-    model_dir = pathlib.Path(model_path) / "saved_model"
-    model = tf.saved_model.load(str(model_dir))
-    return model
 
 
 def run_inference_for_single_image(model, image):
@@ -102,18 +92,13 @@ def select_detected_kitchenware(kitchenware_detected):
 
 
 # ASSUMPTION: the function will only ever make a inference for one second
-def iterate_over_video(path_to_video, timestamp):
+def iterate_over_video(path_to_video, timestamp, category_index, detection_model):
     utils_ops.tf = tf.compat.v1
     tf.gfile = tf.io.gfile
 
-    PATH_TO_LABELS = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/kitchen_tools_label_map.pbtxt'
-    category_index = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
-
-    model_name = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B4/'
-    detection_model = load_model(model_name)
-
     cap = cv2.VideoCapture(path_to_video)
     cap.set(cv2.CAP_PROP_POS_MSEC, timestamp*1000)
+    most_probable_kitchenware = None
 
     while cap.isOpened():
         ret, image_np = cap.read()

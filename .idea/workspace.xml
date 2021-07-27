@@ -2,10 +2,14 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="39e8e914-0787-48db-ae83-bcf4ae7037f9" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/kitchenware.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/step.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/extract_implied_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/extract_implied_tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/syncing_text_with_video.py" beforeDir="false" afterPath="$PROJECT_DIR$/sync.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/extract_implied_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/controlled_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sentence_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_analysis/sentence_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/sync.py" beforeDir="false" afterPath="$PROJECT_DIR$/sync.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +33,7 @@
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/data_analysis" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/recipes/csv" />
       <recent name="$PROJECT_DIR$/recipes/db" />
