@@ -81,20 +81,20 @@ class SyncingTextWithVideo:
             self.counter = 0
 
             video_detected_kitchenware = iterate_over_video(self.path_to_video, self.video_timestamp, self.category_i, self.model)
-            print(video_detected_kitchenware)
+            # print(video_detected_kitchenware)
             self.video_timestamp += int(self.words_per_second)
 
         elif self.word_remainder >= 1:
             self.word_remainder -= 1
 
             video_detected_kitchenware = iterate_over_video(self.path_to_video, self.video_timestamp, self.category_i, self.model)
-            print("\n\n\n[analysis_recipe_sentence] detected_kitchenware: ", video_detected_kitchenware)
+            # print("\n\n\n[analysis_recipe_sentence] detected_kitchenware: ", video_detected_kitchenware)
             self.video_timestamp += 1
 
         self.counter += 1
-        print("word_remainder: ", self.word_remainder)
-        print("counter: ", self.counter)
-        print("words_per_seconds: ", self.words_per_second)
-        print("video_timestamp: ", self.video_timestamp)
+        # print("word_remainder: ", self.word_remainder)
+        # print("counter: ", self.counter)
+        # print("words_per_seconds: ", self.words_per_second)
+        # print("video_timestamp: ", self.video_timestamp)
 
         return video_detected_kitchenware

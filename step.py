@@ -16,9 +16,9 @@ class Step:
             num_sentences += 1
         self.find_foods_from_subjects()
 
-        print("[Step_constructor] verbs: ", self.verbs)
-        print("[Step_constructor]subjects: ", self.subjects)
-        print("[Step_constructor]foods: ", self.foods)
+        # print("[Step_constructor] verbs: ", self.verbs)
+        # print("[Step_constructor]subjects: ", self.subjects)
+        # print("[Step_constructor]foods: ", self.foods)
 
     def loop_over_sentence_in_step(self, num_sentences, sentence):
         i = 0
@@ -52,7 +52,7 @@ class Step:
         return i + 1
 
     def find_foods_from_subjects(self):
-        print("[find_foods_from_subjects] subject dic: " + str(self.subjects))
+        # print("[find_foods_from_subjects] subject dic: " + str(self.subjects))
         for key in self.subjects:
-            print("[find_foods_from_subjects] subject_list: " + str(self.subjects[key]))
+            # print("[find_foods_from_subjects] subject_list: " + str(self.subjects[key]))
             self.foods[key] = filter_out_non_foods(self.subjects[key])

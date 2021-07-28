@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from controlled_parser import Parser
+from information_extraction_engine import IEEngine
 
 if __name__ == '__main__':
-    Parser()
+    IEEngine()
