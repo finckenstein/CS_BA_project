@@ -58,6 +58,13 @@ class SyncingTextWithVideo:
         PATH_TO_LABELS = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/kitchen_tools_label_map.pbtxt'
         model_name = '/home/leander/Desktop/automatic_KB/computer_vision/CV_Kitchen_Tools/CV_KT_detection_model_B4/'
 
+        self.unsupported_kt = ['grill', 'barbecue', 'bbq', 'air fryer', 'mixer', 'blender']
+        self.detectable_kt = {'bowl': ['small bowl', 'medium bowl', 'large bowl'],
+                              'pan': ['saucepan', 'skillet', 'griddle'],
+                              'pot': [],
+                              'baking sheet': ['sheet pan'],
+                              'baking dish': ['foil dish', 'casserole']}
+
         self.videos = os.listdir(PATH_TO_VIDEOS)
         self.category_i = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
         self.model = load_model(model_name)

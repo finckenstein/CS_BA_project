@@ -1234,7 +1234,7 @@ def visualize_boxes_and_labels_on_image_array(
                 else:
                     box_to_color_map[box] = STANDARD_COLORS[
                         classes[i] % len(STANDARD_COLORS)]
-                print("\n", display_str)
+                # print(display_str)
 
                 display_array.append(display_str)
     return display_array

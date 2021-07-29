@@ -20,21 +20,19 @@ from step import Step
 class IEEngine:
     def __init__(self):
         self.entire_tool_kb = db.sql_fetch_tools_db()
-        self.kitchen_obj = Kitchenware(db.sql_fetch_kitchenware_db())
+        self.kt_obj = Kitchenware(db.sql_fetch_kitchenware_db())
         self.step = None
         self.foods_in_ingredient = []
+        print("\n\n\n", self.kt_obj.kitchenware, "\n\n\n")
 
         all_data = []
 
         recipe_rows = db.sql_fetch_1to1_videos("https://tasty.co/recipe/cashew-chicken-stir-fry")
         for recipe in recipe_rows:
-
             self.output = Output()
             self.sync = SyncingTextWithVideo(recipe)
             self.foods_in_ingredient = recipe[db.RecipeI.INGREDIENTS]
-
             self.parse_recipe(recipe)
-
             all_data.append({'URL': recipe[db.RecipeI.URL],
                              'Preparation': self.output.edited_recipe,
                              'Utils': self.output.tools})
@@ -52,16 +50,17 @@ class IEEngine:
             sentences = list(step.sents)
             self.step = Step(sentences)
 
-            # print("\n\n", key, dictionary[key])
+            print("\n\n", key, dictionary[key])
             num_sentence = 0
             for sentence in sentences:
                 self.analyse_recipe_sentence(sentence, recipe, num_sentence)
                 num_sentence += 1
 
     def analyse_recipe_sentence(self, sentence, recipe, num_sentence):
-        self.kitchen_obj.find_kitchenware(self.step.subjects[num_sentence])
+        self.kt_obj.find_kitchenware(self.step.subjects[num_sentence])
         index = 0
         while index < len(sentence):
+            implicitly_stated = False
             token = sentence[index]
             token_text = token.lemma_.lower()
             self.output.append_token_to_text(token)
@@ -71,18 +70,37 @@ class IEEngine:
                 continue
             elif is_verb_or_pronoun(token):
                 # print("VERB: " + token_text)
-                self.kitchen_obj.check_verb_to_verify_implied_kitchenware(token_text)
+                implicitly_stated = self.kt_obj.check_verb_to_verify_implied_kitchenware(token_text)
                 self.find_tool_that_corresponds_to_verb(recipe, token_text, num_sentence)
 
-            self.kitchen_obj.check_explicit_change_in_kitchenware(token, token_text, sentence, index)
+            explicitly_stated = (self.kt_obj.check_explicit_change_in_kitchenware(token, token_text, sentence, index), True)
             index += self.output.check_for_bowl(token_text, sentence, index)
 
-            # cv_kitchenware = self.sync.get_cv_detected_kitchenware()
-            # TODO: compare cv_kitchenware to kitchenware stored in self.cur_kitchenware
+            cv_kitchenware = self.sync.get_cv_detected_kitchenware()
+            if cv_kitchenware is None:
+                continue
+
+            cv_kitchenware = cv_kitchenware.replace("-", " ")
+            print("[analyse_recipe_sentence] cv_kitchenware: ", cv_kitchenware)
+            print("[analyse_recipe_sentence] self.kitchen_obj.cur_kitchenware: ", self.kt_obj.cur_kitchenware)
+            text_kitchenware = self.kt_obj.convert_txt_kt_to_cv_kt(cv_kitchenware, self.sync.detectable_kt,
+                                                                  self.sync.unsupported_kt)
+
+            if (text_kitchenware is not None
+                    and cv_kitchenware != text_kitchenware
+                    and not (explicitly_stated or implicitly_stated)):
+                print("[analyse_recipe_sentence] CV corrected text. Changed kitchenware:")
+                print("from: ", text_kitchenware, " to: ", cv_kitchenware)
+                self.kt_obj.cur_kitchenware = cv_kitchenware
+            # elif
+
+            else:
+                print("No change to self.kitchen_obj.cur_kitchenware")
+            print("Checking next word\n\n")
 
     def find_tool_that_corresponds_to_verb(self, recipe, verb, sentence_in_step):
         for tool in self.entire_tool_kb:
-            kitchenware_is_appropriate = self.kitchen_obj.is_kitchenware_appropriate(tool)
+            kitchenware_is_appropriate = self.kt_obj.is_kitchenware_appropriate(tool)
 
             if (tool[db.ToolI.DIRECT_VERB] is not None
                     and verb in tool[db.ToolI.DIRECT_VERB].split(", ")
