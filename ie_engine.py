@@ -15,6 +15,27 @@ from output import Output
 import database_query as db
 from kitchenware import Kitchenware
 from step import Step
+from collections import Counter
+
+
+def highest_occurrence(kt_list):
+    occurrence_dic = Counter(kt_list)
+    print("[highest_occurrence] ", occurrence_dic)
+    max_val = (None, 0)
+    for key in occurrence_dic:
+        if occurrence_dic[key] >= max_val[1]:
+            max_val = (key, occurrence_dic[key])
+    return max_val[0]
+
+
+def fetch_remaining_words(dictionary, key):
+    word_count = 0
+    for k in dictionary:
+        if k == key:
+            for sentences in dictionary[k]:
+                words_in_step = sentences.split(" ")
+                word_count += len(words_in_step)
+    return word_count
 
 
 class IEEngine:
@@ -25,9 +46,12 @@ class IEEngine:
         self.foods_in_ingredient = []
         print("\n\n\n", self.kt_obj.kitchenware, "\n\n\n")
 
+        self.cv_identified_kt = []
+        self.txt_identified_kt = []
+
         all_data = []
 
-        recipe_rows = db.sql_fetch_1to1_videos("https://tasty.co/recipe/cashew-chicken-stir-fry")
+        recipe_rows = db.sql_fetch_1to1_videos("https://tasty.co/recipe/orange-cauliflower-chicken")
         for recipe in recipe_rows:
             self.output = Output()
             self.sync = SyncingTextWithVideo(recipe)
@@ -35,9 +59,9 @@ class IEEngine:
             self.parse_recipe(recipe)
             all_data.append({'URL': recipe[db.RecipeI.URL],
                              'Preparation': self.output.edited_recipe,
-                             'Utils': self.output.tools})
+                             'Tools': self.output.tools})
 
-        print("\n\n", all_data[0]['Preparation'])
+        print("\n\n", all_data[0]['Preparation'], all_data[0]['Tools'])
         # write_to_csv(all_data)
 
     def parse_recipe(self, recipe):
@@ -53,49 +77,82 @@ class IEEngine:
             print("\n\n", key, dictionary[key])
             num_sentence = 0
             for sentence in sentences:
+
+                print("all CV detected: ", self.cv_identified_kt)
+                print("all TXT detected", self.kt_obj.cur_kitchenware)
+
+                cv_detected = highest_occurrence(self.cv_identified_kt)
+                txt_detected = highest_occurrence(self.txt_identified_kt)
+
+                print("most common cv_detected: ", cv_detected)
+                print("most common txt_detected: ", txt_detected)
+
+                if not self.sync.wait and cv_detected != txt_detected:
+                    self.sync.wait = True
+                elif self.sync.wait and cv_detected == txt_detected:
+                    self.sync.wait = False
+                    self.sync.reset_words_per_minute(fetch_remaining_words(dictionary, key))
+                    self.cv_identified_kt = []
+                else:
+                    self.cv_identified_kt = []
+
+                self.txt_identified_kt = []
+
                 self.analyse_recipe_sentence(sentence, recipe, num_sentence)
                 num_sentence += 1
 
     def analyse_recipe_sentence(self, sentence, recipe, num_sentence):
         self.kt_obj.find_kitchenware(self.step.subjects[num_sentence])
         index = 0
+        explicitly_stated = False
+        implicitly_stated = False
         while index < len(sentence):
-            implicitly_stated = False
             token = sentence[index]
             token_text = token.lemma_.lower()
             self.output.append_token_to_text(token)
+
+            print("Current word: ", token)
 
             if is_verb_or_pronoun(token) and token.dep_ == "amod":
                 index += 1
                 continue
             elif is_verb_or_pronoun(token):
                 # print("VERB: " + token_text)
-                implicitly_stated = self.kt_obj.check_verb_to_verify_implied_kitchenware(token_text)
+                if self.kt_obj.check_verb_to_verify_implied_kitchenware(token_text):
+                    implicitly_stated = True
                 self.find_tool_that_corresponds_to_verb(recipe, token_text, num_sentence)
 
-            explicitly_stated = (self.kt_obj.check_explicit_change_in_kitchenware(token, token_text, sentence, index), True)
+            if self.kt_obj.check_explicit_change_in_kitchenware(token, token_text, sentence, index):
+                explicitly_stated = True
+
             index += self.output.check_for_bowl(token_text, sentence, index)
 
-            cv_kitchenware = self.sync.get_cv_detected_kitchenware()
-            if cv_kitchenware is None:
-                continue
-
-            cv_kitchenware = cv_kitchenware.replace("-", " ")
-            print("[analyse_recipe_sentence] cv_kitchenware: ", cv_kitchenware)
+            text_kitchenware = self.kt_obj.convert_txt_kt_to_cv_kt(self.sync.detectable_kt, self.sync.unsupported_kt)
+            self.txt_identified_kt.append(text_kitchenware)
             print("[analyse_recipe_sentence] self.kitchen_obj.cur_kitchenware: ", self.kt_obj.cur_kitchenware)
-            text_kitchenware = self.kt_obj.convert_txt_kt_to_cv_kt(cv_kitchenware, self.sync.detectable_kt,
-                                                                  self.sync.unsupported_kt)
+            print("which is equivalent to : ", text_kitchenware)
+            print("explicitly_stated: ", explicitly_stated)
+            print("explicitly_stated: ", implicitly_stated)
+            print("self.sync.wait: ", self.sync.wait)
 
-            if (text_kitchenware is not None
-                    and cv_kitchenware != text_kitchenware
-                    and not (explicitly_stated or implicitly_stated)):
-                print("[analyse_recipe_sentence] CV corrected text. Changed kitchenware:")
-                print("from: ", text_kitchenware, " to: ", cv_kitchenware)
-                self.kt_obj.cur_kitchenware = cv_kitchenware
-            # elif
+            if not self.sync.wait and token.pos_ != "PUNCT" and token.pos_ != "NUM":
+                cv_kitchenware = self.sync.get_cv_detected_kitchenware()
+                if cv_kitchenware is None:
+                    print("cv_kitchenware is None. Continue.\n")
+                    continue
 
-            else:
-                print("No change to self.kitchen_obj.cur_kitchenware")
+                cv_kitchenware = cv_kitchenware.replace("-", " ")
+                self.cv_identified_kt.append(cv_kitchenware)
+                print("[analyse_recipe_sentence] cv_kitchenware: ", cv_kitchenware)
+
+                if (text_kitchenware is not None
+                        and cv_kitchenware != text_kitchenware
+                        and not (explicitly_stated or implicitly_stated)):
+                    print("[analyse_recipe_sentence] CV corrected text. Changed kitchenware:")
+                    print("from: ", text_kitchenware, " to: ", cv_kitchenware)
+                    self.kt_obj.cur_kitchenware = cv_kitchenware
+                else:
+                    print("No change to self.kitchen_obj.cur_kitchenware")
             print("Checking next word\n\n")
 
     def find_tool_that_corresponds_to_verb(self, recipe, verb, sentence_in_step):

@@ -64,6 +64,7 @@ class SyncingTextWithVideo:
                               'pot': [],
                               'baking sheet': ['sheet pan'],
                               'baking dish': ['foil dish', 'casserole']}
+        self.wait = False
 
         self.videos = os.listdir(PATH_TO_VIDEOS)
         self.category_i = label_map_util.create_category_index_from_labelmap(PATH_TO_LABELS, use_display_name=True)
@@ -76,9 +77,9 @@ class SyncingTextWithVideo:
         video_file = fetch_video_file(self.videos, recipe[RecipeWithVideoI.VIDEO_ID])
         self.path_to_video = PATH_TO_VIDEOS + video_file
 
-        video_duration = fetch_video_length(PATH_TO_VIDEOS + video_file)
+        self.video_duration = fetch_video_length(PATH_TO_VIDEOS + video_file) - 6
         word_count = fetch_number_of_words(recipe[RecipeWithVideoI.PREPARATION])
-        self.words_per_second = word_count/video_duration
+        self.words_per_second = word_count/self.video_duration
 
     def get_cv_detected_kitchenware(self):
         video_detected_kitchenware = None
@@ -105,3 +106,9 @@ class SyncingTextWithVideo:
         # print("video_timestamp: ", self.video_timestamp)
 
         return video_detected_kitchenware
+
+    def reset_words_per_minute(self, remaining_word_count):
+        remaining_video_sec = self.video_duration - self.video_timestamp
+        tmp = self.words_per_second
+        self.words_per_second = remaining_word_count / remaining_video_sec
+        print("\n\n\nnew self.words/sec changed from: ", tmp, " to: ", self.words_per_second)

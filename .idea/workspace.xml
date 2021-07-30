@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="39e8e914-0787-48db-ae83-bcf4ae7037f9" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" beforeDir="false" afterPath="$PROJECT_DIR$/computer_vision/inference_with_KT_model.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/computer_vision/tensorflow_object_detection_utils/visualization_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/computer_vision/tensorflow_object_detection_utils/visualization_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/information_extraction_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/ie_engine.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/constructed_knowledge/.~lock.kitchenware.csv#" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/data_analysis/sentence_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/data_analysis/sentence_analysis.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ie_engine.py" beforeDir="false" afterPath="$PROJECT_DIR$/ie_engine.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/kitchenware.py" beforeDir="false" afterPath="$PROJECT_DIR$/kitchenware.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/sync.py" beforeDir="false" afterPath="$PROJECT_DIR$/sync.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -46,7 +48,7 @@
       <recent name="$PROJECT_DIR$/recipes/db" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main (1)">
+  <component name="RunManager" selected="Python.sentence_analysis">
     <configuration name="categorize_recipes" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="automatic_KB" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -131,7 +133,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="sync" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="sentence_analysis" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="automatic_KB" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -139,11 +141,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/information_extraction" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/data_analysis" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/sync.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/data_analysis/sentence_analysis.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -154,6 +156,7 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.sentence_analysis" />
         <item itemvalue="Python.main (1)" />
         <item itemvalue="Python.categorize_recipes" />
         <item itemvalue="Python.correlation" />

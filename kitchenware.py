@@ -30,9 +30,13 @@ class Kitchenware:
                     # print("[check_potential_kitchenware_change] changed cur_kitchenware from " +
                     #       str(self.cur_kitchenware) + " to " + str(kb_row[KitchenwareI.DEFAULT]))
                     self.cur_kitchenware = kb_row[KitchenwareI.DEFAULT]
+                    return True
+                elif self.cur_kitchenware in list_of_kb_kitchenware:
+                    return True
+        return False
 
     def match_noun_to_kitchenware(self, noun):
-        if not noun == self.cur_kitchenware and noun in self.kitchenware:
+        if noun in self.kitchenware:
             # print("[match_noun_to_kitchenware] changed kitchenware from " + self.cur_kitchenware + " to " + noun)
             self.cur_kitchenware = noun
             return True
@@ -53,11 +57,12 @@ class Kitchenware:
             return self.match_noun_to_kitchenware((token_text + " " + sentence[index + 2].text.lower()))
         elif is_size_bowl(sentence, index + 3):
             return self.match_noun_to_kitchenware((token_text + " " + sentence[index + 3].text.lower()))
+        return False
 
-    def convert_txt_kt_to_cv_kt(self, cv_kt, detectable_kt, unsupported_kt):
+    def convert_txt_kt_to_cv_kt(self, detectable_kt, unsupported_kt):
         if self.cur_kitchenware in unsupported_kt:
             return None
-        for kt in detectable_kt[cv_kt]:
-            if self.cur_kitchenware == kt:
-                print("changes kitchenware to compare to: ", cv_kt)
-                return cv_kt
+        for key in detectable_kt:
+            for elem in detectable_kt[key]:
+                if self.cur_kitchenware == elem or self.cur_kitchenware == key:
+                    return key
